@@ -1,0 +1,6 @@
+# Private notes while working on this repo. kit/.local_context/ is the template and is committed.
+/.local_context/
+
+# Generated files
+__pycache__/
+.DS_Store

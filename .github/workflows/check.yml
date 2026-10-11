@@ -1,0 +1,22 @@
+name: Check kit
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    strategy:
+      matrix:
+        # macOS runs the scripts on bash 3.2, the oldest bash they support.
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Consistency checks
+        run: python3 scripts/check.py
+      - name: Script tests
+        run: python3 -m unittest discover -s tests -v
