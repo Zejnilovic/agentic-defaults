@@ -13,5 +13,11 @@ First version.
 - **Skills**: project-scan (with a survey script), task-plans, diagrams, context-md (with a freshness check script), tdd, debugging, commits-and-prs.
 - **`.local_context/`**: a self-ignoring folder for private task notes.
 - **Scripts**: `scripts/sync.sh` updates a project's copy of the kit.
+- **Delivery safeguards**, adapted from [GSD Core](https://github.com/open-gsd/gsd-core) (MIT):
+  - the reviewer checks that a plan's goal was met (true, real, connected), not just that steps were ticked,
+  - the developer has rules for fixing unplanned problems versus stopping to ask, and a guard against reading without acting,
+  - requirements are never watered down to fit ("for now", "placeholder"); work is split instead,
+  - every plan step names a Verify command,
+  - packages are installed only when named, never swapped for a similar name, and the security reviewer checks new ones for typosquatting.
 
 Tested with Claude Code, including a project scan of a real application. GitHub Copilot support follows the VS Code documentation and is not yet verified.

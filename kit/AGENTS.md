@@ -10,6 +10,7 @@ These rules apply to every task in this repository. Project-specific details go 
 - Match the process to the size of the change. A small change goes straight to implementation. A change that spans modules or needs a design decision gets a short plan first.
 - Prefer a working, tested slice now over a complete design later. Don't add abstractions, options or extension points that no current requirement needs.
 - Follow the patterns already in the codebase. Leave unrelated code alone; if you notice something worth fixing, mention it instead of fixing it.
+- Add a dependency only when the task needs it. If an install fails, stop: never try a similarly named package, which may be fake or malicious.
 - State the assumptions you made. Ask only when a decision is genuinely the user's and there is no sensible default.
 
 ## Test

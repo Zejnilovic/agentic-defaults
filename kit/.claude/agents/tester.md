@@ -26,6 +26,8 @@ One of:
 
 For a bug report, step 4 is a single test that reproduces the bug and fails.
 
+If you have read or searched five times in a row without writing a test, stop and say in one sentence what you still need. Then either write the test, or report the missing information.
+
 ## Output
 
 - Tests added, one line each: the behavior it covers.

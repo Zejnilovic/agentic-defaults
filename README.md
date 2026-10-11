@@ -47,7 +47,7 @@ Generic instructions, skills and agents for AI coding assistants, built around p
 | [`architect`](kit/.claude/agents/architect.md) | Designs the approach and writes steps, diagrams and decisions into the plan. | Plans and design docs | Strong |
 | [`developer`](kit/.claude/agents/developer.md) | Carries out plan steps test-first and ticks them off. | Code, tests, docs | Everyday |
 | [`tester`](kit/.claude/agents/tester.md) | Finds untested behavior that matters, writes the tests, reports bugs. | Tests only | Everyday |
-| [`reviewer`](kit/.claude/agents/reviewer.md) | Reviews a change for bugs, missing tests, stale docs and over-engineering. | Nothing | Strong |
+| [`reviewer`](kit/.claude/agents/reviewer.md) | Checks that a plan's goal was actually met, and reviews a change for bugs, missing tests, stale docs and over-engineering. | Nothing | Strong |
 | [`security-reviewer`](kit/.claude/agents/security-reviewer.md) | Reviews a change for exploitable security problems, reporting only those with a plausible attack path. | Nothing | Strong |
 | [`documenter`](kit/.claude/agents/documenter.md) | Keeps `CONTEXT.md` and docs true to the code, and closes finished plans. | Docs only | Everyday |
 
@@ -178,6 +178,10 @@ python3 -m unittest discover -s tests
 ```
 
 `check.py` verifies frontmatter, skill references, links, this README's tables, version markers, the word budget of the working agreement, script syntax and, when the Mermaid CLI is installed, that diagrams render. The tests cover the scripts' behavior. CI runs both on Linux and macOS.
+
+## Credits
+
+Several delivery safeguards are adapted from [GSD Core](https://github.com/open-gsd/gsd-core) (MIT): goal checks in review, the developer's rules for unplanned work, the ban on watered-down requirements, and dependency safety. GSD is a much larger framework with its own installer and phase loop; this kit takes a few of its ideas in a lighter, copy-by-hand form.
 
 ## License
 

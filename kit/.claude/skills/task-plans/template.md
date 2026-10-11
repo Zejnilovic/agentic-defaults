@@ -13,7 +13,7 @@ Notes: `.local_context/<slug>/` (not committed)
 
 ## Requirements
 
-- Must: <behavior that has to work>
+- Must: <behavior someone can check, e.g. "An approver sees only entries from their own projects">
 - Out of scope: <what this task deliberately doesn't do>
 
 ## Open questions
@@ -26,7 +26,7 @@ Notes: `.local_context/<slug>/` (not committed)
 
 ## Steps
 
-- [ ] 1. <What changes>. Files: <paths>. Test: <behavior the test proves>. Done when: <observable result>.
+- [ ] 1. <What changes>. Files: <paths>. Test: <behavior the test proves>. Verify: `<command that proves it>`. Done when: <observable result>.
 - [ ] 2. ...
 
 ## Risks

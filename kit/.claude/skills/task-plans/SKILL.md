@@ -24,11 +24,13 @@ Start from [template.md](template.md). Fill in only the sections the current sta
 1. **Discovery** (status `discovery`). Read the notes in `.local_context/<slug>/`, the relevant `CONTEXT.md` files and only the code needed. Fill in Goal, Context, Requirements and Open questions.
    - Summarize the notes; don't paste them. Never copy secrets, credentials, personal data or customer data into the plan.
    - Notes can be outdated. When they disagree with the code, trust the code and add an open question.
+   - Write each Must as a behavior someone can check in a test or the running system: "An approver sees only entries from their own projects", not "permission support". The reviewer checks each one at the end.
 2. **Planning** (status `planned`). Fill in Approach, Steps and Decisions. Resolve every open question, or record it under Risks as accepted.
-   - Each step delivers a working, tested increment and names files, the test and a "done when".
+   - Each step delivers a working, tested increment and names files, the test, a Verify command and a "done when". Every Must is covered by a step.
+   - Never water a requirement down to make it fit ("for now", "placeholder", "v1"). Split it into another step or plan and say so.
    - Write steps concretely enough that a developer on a smaller model can do one without re-reading the whole design.
-3. **Delivery** (status `in progress`). Work one step at a time and tick it off (`- [x]`) when its test passes. If a step turns out to be wrong, stop and update the plan before continuing, so the file stays true.
-4. **Close** (status `done`). Move lasting decisions into the relevant `CONTEXT.md` files. Then delete the plan, unless `AGENTS.md` says to keep finished plans. Git keeps the history.
+3. **Delivery** (status `in progress`). Work one step at a time and tick it off (`- [x]`) when its Verify command passes. If a step turns out to be wrong, stop and update the plan before continuing, so the file stays true.
+4. **Close** (status `done`), once the reviewer has confirmed each Must is met. Move lasting decisions into the relevant `CONTEXT.md` files. Then delete the plan, unless `AGENTS.md` says to keep finished plans. Git keeps the history.
 
 ## Handing work to an agent
 
