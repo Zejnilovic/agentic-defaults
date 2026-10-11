@@ -6,6 +6,7 @@ always-on word budget, shell script syntax, and (when mmdc is installed) Mermaid
 Exits 1 if any problem is found.
 """
 
+import os
 import pathlib
 import re
 import shutil
@@ -120,9 +121,38 @@ if "\n## This project" not in agreement:
 marker = re.search(r"agentic-defaults (\d+\.\d+\.\d+)", agreement)
 if not marker or marker.group(1) != version:
     problems.append(f"kit/AGENTS.md version marker doesn't match VERSION {version}")
-changelog = re.search(r"^## (\d+\.\d+\.\d+)", (REPO / "CHANGELOG.md").read_text(), re.M)
-if not changelog or changelog.group(1) != version:
+newest = re.search(r"^## (\d+\.\d+\.\d+)([^\n]*)\n(.*?)(?=^## |\Z)", (REPO / "CHANGELOG.md").read_text(), re.M | re.S)
+if not newest or newest.group(1) != version:
     problems.append(f"CHANGELOG.md's newest entry doesn't match VERSION {version}")
+else:
+    if not re.search(r"^- \S", newest.group(3), re.M):
+        problems.append(f"CHANGELOG.md's {version} entry has no bullet points describing the change")
+    if "TODO" in newest.group(3):
+        problems.append(f"CHANGELOG.md's {version} entry still has a TODO: describe the change")
+
+
+def git(*args):
+    return subprocess.run(["git", "-C", str(REPO), *args], capture_output=True, text=True)
+
+
+# Release rule: once VERSION is tagged as released, any change to kit/ needs a new version.
+tag = f"v{version}"
+if git("rev-parse", "--git-dir").returncode != 0:
+    release_note = "release rule skipped (not a git repository)"
+elif git("rev-parse", "-q", "--verify", f"refs/tags/{tag}").returncode == 0:
+    release_note = f"released as {tag}"
+    if newest and not re.search(r"\(\d{4}-\d{2}-\d{2}\)", newest.group(2)):
+        problems.append(f"{version} is released as {tag}, so its CHANGELOG.md heading needs the release date, "
+                        f"for example '## {version} (YYYY-MM-DD)'")
+    changed = sorted(set(git("diff", "--name-only", tag, "--", "kit").stdout.splitlines())
+                     | set(git("ls-files", "--others", "--exclude-standard", "--", "kit").stdout.splitlines()))
+    if changed:
+        listed = ", ".join(changed[:3]) + (f" and {len(changed) - 3} more" if len(changed) > 3 else "")
+        problems.append(f"kit/ changed since {tag} was released ({listed}). Start a new version with "
+                        f"'bash scripts/bump.sh <version>': patch for wording and fixes, minor for new agents, "
+                        f"skills or rules, major for renames or removals")
+else:
+    release_note = f"not released yet (no tag {tag})"
 words = len(agreement.split())
 if words > AGREEMENT_WORD_BUDGET:
     problems.append(f"kit/AGENTS.md has {words} words, over the {AGREEMENT_WORD_BUDGET}-word budget")
@@ -133,7 +163,9 @@ for script in [*KIT.rglob("*.sh"), *(REPO / "scripts").glob("*.sh")]:
         problems.append(f"{rel(script)}: syntax error: {result.stderr.strip()}")
 
 mermaid_files = [p for p in [REPO / "README.md", *KIT.rglob("*.md")] if "```mermaid" in p.read_text()]
-if shutil.which("mmdc"):
+if os.environ.get("AGENTIC_DEFAULTS_SKIP_MERMAID"):
+    mermaid_note = "Mermaid rendering skipped (AGENTIC_DEFAULTS_SKIP_MERMAID is set)"
+elif shutil.which("mmdc"):
     with tempfile.TemporaryDirectory() as out:
         for path in mermaid_files:
             result = subprocess.run(["mmdc", "-q", "-i", str(path), "-o", f"{out}/{path.name}"],
@@ -145,7 +177,7 @@ else:
     mermaid_note = "Mermaid rendering skipped (mmdc not installed)"
 
 print(f"Checked {len(skills)} skills, {len(list(AGENTS_DIR.glob('*.md')))} agents, "
-      f"kit/AGENTS.md at {words}/{AGREEMENT_WORD_BUDGET} words, version {version}. {mermaid_note}.")
+      f"kit/AGENTS.md at {words}/{AGREEMENT_WORD_BUDGET} words, version {version} {release_note}. {mermaid_note}.")
 if problems:
     print("\nProblems:")
     for problem in problems:

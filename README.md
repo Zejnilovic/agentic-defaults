@@ -191,6 +191,14 @@ python3 -m unittest discover -s tests
 
 `check.py` verifies frontmatter, skill references, links, this README's tables, version markers, the word budget of the working agreement, script syntax and, when the Mermaid CLI is installed, that diagrams render. The tests cover the scripts' behavior. CI runs both on Linux and macOS.
 
+Every change to `kit/` after a release needs a new version, and `check.py` fails until there is one. Start it with:
+
+```bash
+bash scripts/bump.sh 0.1.1
+```
+
+Then describe the change in `CHANGELOG.md`. To release, date the version's heading, commit, and tag the commit `v<version>`. The full rules are in [AGENTS.md](AGENTS.md).
+
 ## Credits
 
 Several delivery safeguards are adapted from [GSD Core](https://github.com/open-gsd/gsd-core) (MIT): goal checks in review, the developer's rules for unplanned work, the ban on watered-down requirements, and dependency safety. GSD is a much larger framework with its own installer and phase loop; this kit takes a few of its ideas in a lighter, copy-by-hand form.

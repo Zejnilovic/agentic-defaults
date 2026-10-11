@@ -16,6 +16,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history and tags, so check.py can compare kit/ with the last release tag.
+          fetch-depth: 0
       - name: Consistency checks
         run: python3 scripts/check.py
       - name: Script tests

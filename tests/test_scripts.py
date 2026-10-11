@@ -2,6 +2,8 @@
 
 import os
 import pathlib
+import re
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -164,6 +166,85 @@ class SyncTest(unittest.TestCase):
         self.sync("--apply", "--existing-only")
         self.assertNotEqual(pathlib.Path(self.project, ".claude/skills/tdd/SKILL.md").read_text(), "outdated\n")
         self.assertFalse(os.path.exists(os.path.join(self.project, ".claude/agents/developer.md")))
+
+
+class VersionTest(GitRepoCase):
+    """check.py's release rule and scripts/bump.sh, on a copy of this repo released as 1.0.0."""
+
+    def setUp(self):
+        super().setUp()
+        shutil.copytree(REPO, self.root, dirs_exist_ok=True, ignore=shutil.ignore_patterns(".git", "__pycache__"))
+        self.set_release("1.0.0", "## 1.0.0 (2026-01-01)\n\n- First release.\n")
+
+    def set_release(self, version, entry):
+        write(self.root, "VERSION", version + "\n")
+        agreement = pathlib.Path(self.root, "kit/AGENTS.md")
+        agreement.write_text(re.sub(r"agentic-defaults \d+\.\d+\.\d+", f"agentic-defaults {version}",
+                                    agreement.read_text(), count=1))
+        changelog = pathlib.Path(self.root, "CHANGELOG.md")
+        intro = changelog.read_text().split("\n## ", 1)[0]
+        changelog.write_text(f"{intro}\n{entry}")
+        self.commit("release")
+        run(["git", "tag", "-f", f"v{version}"], self.root)
+
+    def check(self):
+        env = {**GIT_ENV, "AGENTIC_DEFAULTS_SKIP_MERMAID": "1"}
+        return subprocess.run(["python3", "scripts/check.py"], cwd=self.root, env=env, capture_output=True, text=True)
+
+    def bump(self, version):
+        return run(["bash", "scripts/bump.sh", version], self.root)
+
+    def read(self, rel):
+        return pathlib.Path(self.root, rel).read_text()
+
+    def test_released_version_with_unchanged_kit_passes(self):
+        result = self.check()
+        self.assertEqual(result.returncode, 0, result.stdout)
+
+    def test_kit_change_after_release_fails_until_bumped_and_described(self):
+        write(self.root, "kit/.claude/skills/tdd/SKILL.md", self.read("kit/.claude/skills/tdd/SKILL.md") + "\nNew rule.\n")
+        result = self.check()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("v1.0.0", result.stdout)
+        self.assertIn("bump.sh", result.stdout)
+
+        self.assertEqual(self.bump("1.0.1").returncode, 0)
+        result = self.check()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("TODO", result.stdout)
+
+        write(self.root, "CHANGELOG.md", self.read("CHANGELOG.md").replace("TODO: describe the change", "New TDD rule."))
+        result = self.check()
+        self.assertEqual(result.returncode, 0, result.stdout)
+
+    def test_new_untracked_kit_file_counts_as_a_change(self):
+        write(self.root, "kit/.claude/skills/tdd/notes.md", "extra\n")
+        self.assertEqual(self.check().returncode, 1)
+
+    def test_changes_outside_kit_need_no_bump(self):
+        write(self.root, "README.md", self.read("README.md") + "\nMore words.\n")
+        result = self.check()
+        self.assertEqual(result.returncode, 0, result.stdout)
+
+    def test_released_version_needs_a_dated_heading(self):
+        self.set_release("1.0.0", "## 1.0.0 (unreleased)\n\n- First release.\n")
+        result = self.check()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("date", result.stdout)
+
+    def test_bump_updates_version_marker_and_changelog(self):
+        result = self.bump("1.1.0")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.read("VERSION"), "1.1.0\n")
+        self.assertIn("agentic-defaults 1.1.0", self.read("kit/AGENTS.md").splitlines()[0])
+        changelog = self.read("CHANGELOG.md")
+        self.assertLess(changelog.index("## 1.1.0 (unreleased)"), changelog.index("## 1.0.0 (2026-01-01)"))
+
+    def test_bump_rejects_malformed_or_not_greater_versions(self):
+        for bad in ["1.0", "v1.0.1", "1.0.0", "0.9.9"]:
+            result = self.bump(bad)
+            self.assertNotEqual(result.returncode, 0, bad)
+        self.assertEqual(self.read("VERSION"), "1.0.0\n")
 
 
 class SurveyTest(unittest.TestCase):

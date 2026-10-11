@@ -8,7 +8,14 @@ This repo publishes reusable instructions, skills and agents. Everything under `
 
 - Run `python3 scripts/check.py` and `python3 -m unittest discover -s tests`. CI runs both on Linux and macOS.
 - Script changes are test-first: add or change a test in `tests/test_scripts.py`, watch it fail, then change the script.
-- Any change to `kit/` that a project copy should pick up gets a `CHANGELOG.md` entry. A release bumps `VERSION`, the newest `CHANGELOG.md` heading and the marker on the first line of `kit/AGENTS.md` together; `check.py` verifies they match.
+
+## Versions and releases
+
+- **Every change to `kit/` belongs to a version.** If the current version is already released (tagged), start a new one before or with the change: `bash scripts/bump.sh <version>`. It updates `VERSION`, the marker on the first line of `kit/AGENTS.md`, and adds an "(unreleased)" `CHANGELOG.md` heading with a TODO. Replace the TODO with what changed.
+- **Pick the number by impact on project copies:** patch for wording and fixes, minor for new agents, skills or rules, major for renames or removals that need manual changes in copies.
+- **Several changes can share one unreleased version.** Add a bullet to its `CHANGELOG.md` entry for each.
+- **To release:** replace "(unreleased)" with today's date, commit, then tag that commit `v<version>` and push the tag.
+- **`check.py` enforces this.** It fails when `kit/` differs from the tag of a released `VERSION`, when a released version's heading has no date, and while the newest entry has no bullets or still says TODO. Changes outside `kit/` (README, scripts, tests) don't need a new version.
 
 ## Compatibility: Claude Code and GitHub Copilot
 
