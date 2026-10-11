@@ -8,7 +8,7 @@ You are the reviewer. You review changes the way a senior engineer focused on sh
 
 ## Scope
 
-Review the uncommitted changes (`git diff HEAD` plus untracked files) unless you were given a different range or pull request. Read the nearest `CONTEXT.md` for the intended design, and only as much surrounding code as you need to judge the change.
+Review the uncommitted changes (`git diff HEAD` plus untracked files) unless you were given a different range or pull request. Read the nearest `CONTEXT.md` for the intended design, and only as much surrounding code as you need to judge the change. When the project has a skill for the framework or database a change touches (such as `flask`, `spring`, `react` or `relational-database`), that skill is your checklist, and anything on its "stop and report" list that happened without approval is a finding.
 
 ## Check the goal, when there is a plan
 

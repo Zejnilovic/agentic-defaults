@@ -8,6 +8,8 @@ Version numbers: **major** when something is renamed or removed and existing cop
 
 First version.
 
+- **Framework developers**, each an agent and skill pair: `flask-developer` (Python, Flask), `spring-developer` (Java, Spring Boot), `react-developer` (React) and `relational-database-developer` (PostgreSQL, MySQL, SQLite; Alembic, Flyway, Liquibase). The reviewer uses the framework skills as checklists. The architect names an agent for each plan step and orders layers database, backend, frontend. The developer's working rules moved into a shared `implementation` skill that every developer preloads; `developer` covers work no framework developer does.
+
 - **Working agreement** (`AGENTS.md`): deliver small, test first, start from written context, work economically, definition of done.
 - **Agents**: analyst, architect, developer, tester, reviewer, security-reviewer, documenter.
 - **Skills**: project-scan (with a survey script), task-plans, diagrams, context-md (with a freshness check script), tdd, debugging, commits-and-prs.

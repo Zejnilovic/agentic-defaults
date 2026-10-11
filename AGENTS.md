@@ -26,7 +26,9 @@ The kit must work well on fast, inexpensive models, not only the strongest ones.
 - Say what to skip as well as what to do. Prefer concrete limits to judgment calls: "at most 10 findings" rather than "keep it brief".
 - Keep files short. `kit/AGENTS.md` is loaded into every conversation (`check.py` enforces a 700-word budget), and skills listed in an agent's `skills` are loaded in full.
 - Write agent descriptions so they trigger only when the role is worth its cost. Claude Code delegates automatically based on the description, and a discovery run can cost hundreds of thousands of tokens.
-- Set `model: sonnet` only for roles that mainly reason (architect, reviewers) and `model: haiku` for roles that mainly read or execute (analyst, developer, tester, documenter).
+- Set `model: sonnet` only for roles that mainly reason (architect, reviewers) and `model: haiku` for roles that mainly read or execute (analyst, the developers, tester, documenter).
+- Framework developers come in pairs: a `<name>` skill with the framework's practices and a thin `<name>-developer` agent that preloads `implementation` and `<name>`, plus a short "essentials" fallback for tools that don't preload skills. Change shared developer behavior in the `implementation` skill, not in each agent. Framework skills keep the same sections (follow the project first, structure, the framework's own concerns, `## Tests`, `## Stop and report before`); `check.py` enforces the pairing and the last two sections.
+- Framework skills hold the framework's practices, not any one project's conventions. Write only what you're sure is current for the framework; leave out version-specific details unless they matter.
 
 ## Content rules
 

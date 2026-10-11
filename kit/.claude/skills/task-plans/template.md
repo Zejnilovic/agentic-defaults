@@ -26,7 +26,7 @@ Notes: `.local_context/<slug>/` (not committed)
 
 ## Steps
 
-- [ ] 1. <What changes>. Files: <paths>. Test: <behavior the test proves>. Verify: `<command that proves it>`. Done when: <observable result>.
+- [ ] 1. <What changes>. Agent: <e.g. relational-database-developer, flask-developer, react-developer, developer>. Files: <paths>. Test: <behavior the test proves>. Verify: `<command that proves it>`. Done when: <observable result>.
 - [ ] 2. ...
 
 ## Risks

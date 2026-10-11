@@ -38,6 +38,11 @@ Generic instructions, skills and agents for AI coding assistants, built around p
 | [`tdd`](kit/.claude/skills/tdd/SKILL.md) | The test-first loop, how much to test, refactoring safely. |
 | [`debugging`](kit/.claude/skills/debugging/SKILL.md) | Finding the root cause before fixing, with a rule for when to stop guessing. |
 | [`commits-and-prs`](kit/.claude/skills/commits-and-prs/SKILL.md) | Splitting work into commits, writing messages, and preparing and describing pull requests. Includes git safety rules for agents. |
+| [`implementation`](kit/.claude/skills/implementation/SKILL.md) | The shared working rules of all developer agents: deliver fully, handle unplanned problems, dependencies, when to stop, what to report. |
+| [`flask`](kit/.claude/skills/flask/SKILL.md) | Python and Flask: app factory, validation, record-level access checks, SQLAlchemy sessions and N+1, background work, pytest. |
+| [`spring`](kit/.claude/skills/spring/SKILL.md) | Java and Spring Boot: DTOs, Bean Validation, Spring Security, `@Transactional` pitfalls, JPA fetching, MockMvc and Testcontainers. |
+| [`react`](kit/.claude/skills/react/SKILL.md) | React: reuse what exists, all four data states, state and effects, forms, accessibility, security, React Testing Library. |
+| [`relational-database`](kit/.claude/skills/relational-database/SKILL.md) | PostgreSQL, MySQL, SQLite: expand-then-contract migrations, Alembic, Flyway and Liquibase traps, engine-specific locking, strict stop rules. |
 
 ### Agents
 
@@ -45,7 +50,11 @@ Generic instructions, skills and agents for AI coding assistants, built around p
 |---|---|---|---|
 | [`analyst`](kit/.claude/agents/analyst.md) | Scans the project, and turns task notes into the discovery part of a plan. | Docs and plans | Everyday |
 | [`architect`](kit/.claude/agents/architect.md) | Designs the approach and writes steps, diagrams and decisions into the plan. | Plans and design docs | Strong |
-| [`developer`](kit/.claude/agents/developer.md) | Carries out plan steps test-first and ticks them off. | Code, tests, docs | Everyday |
+| [`relational-database-developer`](kit/.claude/agents/relational-database-developer.md) | Schema changes, migrations, indexes, queries and data fixes, with strict stop rules for anything irreversible. | Migrations, queries, tests | Everyday |
+| [`flask-developer`](kit/.claude/agents/flask-developer.md) | Python Flask endpoints, services, jobs and integrations. | Server code, tests, docs | Everyday |
+| [`spring-developer`](kit/.claude/agents/spring-developer.md) | Java Spring Boot controllers, services, repositories and configuration. | Server code, tests, docs | Everyday |
+| [`react-developer`](kit/.claude/agents/react-developer.md) | React pages, components, hooks, forms and API calls. | UI code, tests, docs | Everyday |
+| [`developer`](kit/.claude/agents/developer.md) | Anything no framework developer covers: scripts, tools, libraries, infrastructure, other stacks. | Code, tests, docs | Everyday |
 | [`tester`](kit/.claude/agents/tester.md) | Finds untested behavior that matters, writes the tests, reports bugs. | Tests only | Everyday |
 | [`reviewer`](kit/.claude/agents/reviewer.md) | Checks that a plan's goal was actually met, and reviews a change for bugs, missing tests, stale docs and over-engineering. | Nothing | Strong |
 | [`security-reviewer`](kit/.claude/agents/security-reviewer.md) | Reviews a change for exploitable security problems, reporting only those with a plausible attack path. | Nothing | Strong |
@@ -71,7 +80,7 @@ flowchart LR
 
 1. **Analyst** reads your notes and the code, and writes the plan's Goal, Context, Requirements and Open questions.
 2. **Architect** answers the open questions, designs the approach and writes the Steps.
-3. **Developer** implements one or a few steps at a time: "Implement steps 1–2 of `docs/plans/csv-export.md`."
+3. **Developers** implement one or a few steps at a time. Each step names its agent, and the architect orders steps database, then backend, then frontend: "relational-database-developer: implement step 1 of `docs/plans/csv-export.md`." All developers share the `implementation` skill's rules; each framework developer adds its framework's skill.
 4. **Tester** fills the gaps in coverage.
 5. **Reviewer** checks the result against the plan. Add the **security reviewer** when the change touches authentication, permissions, untrusted input, secrets, cryptography or dependencies; the reviewer tells you when.
 6. **Documenter** moves the plan's decisions into `CONTEXT.md` and closes the plan.
@@ -104,6 +113,8 @@ Small changes need none of this: the working agreement and skills cover a normal
 | Local notes | `.local_context/` at the project root | Same |
 
 Copying the whole `kit/` folder into a project root gives both tools everything. Copy each skill as a whole folder, since it may contain a template or script. Agents refer to skills by name, so copy the skills an agent lists along with it.
+
+Keep only the framework pairs your project uses: a Flask and React project deletes `spring-developer.md` and `skills/spring/`. Fewer agents mean a shorter agent list in Copilot and less guessing when Claude Code picks one. To update later without bringing deleted pairs back, run sync with `--apply --existing-only`.
 
 After copying, run a project scan to fill in the **This project** section of `AGENTS.md`, or fill it in by hand.
 
@@ -164,6 +175,7 @@ npm install -g @mermaid-js/mermaid-cli
 - **Restrictions are instructions, not enforcement.** "Edits tests only" is written in the agent's text. To enforce it, add a `tools` list to the agent, for example `tools: Read, Grep, Glob, Bash` for a read-only reviewer. Claude Code uses these names directly, and VS Code maps them for files in `.claude/agents`. Check that the agent can still do its job afterwards.
 - **`skills` in an agent's frontmatter** preloads those skills in Claude Code. Copilot ignores the field and loads skills when they're relevant.
 - **Plans folder and retention** are set in the "This project" section of `AGENTS.md`.
+- **Another framework** (FastAPI, Django, Angular, Vue and so on) is a pair: a `<framework>` skill and a `<framework>-developer` agent. Copy the closest existing pair, keep the skill's sections (follow the project first, structure, the framework's own concerns, tests, stop and report before), and keep `implementation` in the agent's `skills` list so it follows the shared rules. Project-specific conventions go in the area's `CONTEXT.md`, not in the skill.
 
 ## Working on this repo
 

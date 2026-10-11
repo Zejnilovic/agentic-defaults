@@ -83,6 +83,17 @@ for path in sorted(AGENTS_DIR.glob("*.md")):
     for skill in set(preload) | skill_mentions(text):
         if skill not in skills:
             problems.append(f"{rel(path)}: refers to missing skill '{skill}'")
+    # Framework developers: <name>-developer preloads implementation and its <name> skill.
+    if path.stem.endswith("-developer"):
+        framework = path.stem[: -len("-developer")]
+        for required in ("implementation", framework):
+            if required not in preload:
+                problems.append(f"{rel(path)}: framework developer must preload the '{required}' skill")
+        if framework in skills:
+            for heading in (r"^## Tests$", r"^## (Always )?Stop and report before$"):
+                if not re.search(heading, skills[framework], re.M | re.I):
+                    problems.append(f"kit/.claude/skills/{framework}/SKILL.md: framework skill needs a "
+                                    f"'{heading.strip('^$')}' section")
 
 for path in [KIT / "AGENTS.md", *SKILLS_DIR.glob("*/SKILL.md")]:
     for skill in skill_mentions(path.read_text()):

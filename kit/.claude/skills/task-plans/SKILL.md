@@ -26,7 +26,8 @@ Start from [template.md](template.md). Fill in only the sections the current sta
    - Notes can be outdated. When they disagree with the code, trust the code and add an open question.
    - Write each Must as a behavior someone can check in a test or the running system: "An approver sees only entries from their own projects", not "permission support". The reviewer checks each one at the end.
 2. **Planning** (status `planned`). Fill in Approach, Steps and Decisions. Resolve every open question, or record it under Risks as accepted.
-   - Each step delivers a working, tested increment and names files, the test, a Verify command and a "done when". Every Must is covered by a step.
+   - Each step delivers a working, tested increment and names the agent that does it, files, the test, a Verify command and a "done when". Every Must is covered by a step.
+   - A slice that spans layers becomes one step per layer, in the order database, backend, frontend, so each framework developer gets work in its own stack.
    - Never water a requirement down to make it fit ("for now", "placeholder", "v1"). Split it into another step or plan and say so.
    - Write steps concretely enough that a developer on a smaller model can do one without re-reading the whole design.
 3. **Delivery** (status `in progress`). Work one step at a time and tick it off (`- [x]`) when its Verify command passes. If a step turns out to be wrong, stop and update the plan before continuing, so the file stays true.
@@ -34,4 +35,4 @@ Start from [template.md](template.md). Fill in only the sections the current sta
 
 ## Handing work to an agent
 
-Pass the plan path and the step numbers, for example: "Implement steps 2–3 of `docs/plans/csv-export.md`." The agent reads the plan itself, so you don't need to repeat it.
+Give the step to the agent it names, with the plan path and step numbers, for example: "flask-developer: implement step 2 of `docs/plans/csv-export.md`." The agent reads the plan itself, so you don't need to repeat it. Consecutive steps for the same agent can go in one request.
