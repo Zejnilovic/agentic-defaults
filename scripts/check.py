@@ -101,7 +101,7 @@ for path in [KIT / "AGENTS.md", *SKILLS_DIR.glob("*/SKILL.md")]:
         if skill not in skills:
             problems.append(f"{rel(path)}: refers to missing skill '{skill}'")
 
-for path in [REPO / "README.md", REPO / "CHANGELOG.md", REPO / "AGENTS.md", *KIT.rglob("*.md")]:
+for path in [REPO / "README.md", REPO / "CHANGELOG.md", REPO / "AGENTS.md", *REPO.glob("docs/*.md"), *KIT.rglob("*.md")]:
     for link in re.findall(r"\]\(([^)#\s]+)", without_code(path.read_text())):
         if not re.match(r"[a-z]+:", link) and not (path.parent / link).exists():
             problems.append(f"{rel(path)}: broken link '{link}'")
@@ -162,7 +162,8 @@ for script in [*KIT.rglob("*.sh"), *(REPO / "scripts").glob("*.sh")]:
     if result.returncode != 0:
         problems.append(f"{rel(script)}: syntax error: {result.stderr.strip()}")
 
-mermaid_files = [p for p in [REPO / "README.md", *KIT.rglob("*.md")] if "```mermaid" in p.read_text()]
+mermaid_files = [p for p in [REPO / "README.md", *REPO.glob("docs/*.md"), *KIT.rglob("*.md")]
+                 if "```mermaid" in p.read_text()]
 if os.environ.get("AGENTIC_DEFAULTS_SKIP_MERMAID"):
     mermaid_note = "Mermaid rendering skipped (AGENTIC_DEFAULTS_SKIP_MERMAID is set)"
 elif shutil.which("mmdc"):

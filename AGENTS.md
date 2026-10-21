@@ -39,6 +39,8 @@ The kit must work well on fast, inexpensive models, not only the strongest ones.
 
 ## Content rules
 
+- [docs/methodology.md](docs/methodology.md) is the why behind the kit, written for people. Its principles name no model or product. Tools appear only as examples ("for example Mermaid"), so each principle stays true when the tool is replaced. Only its last section maps principles to kit files, and it lists what the kit doesn't implement yet. When a kit change contradicts a principle, change one of them deliberately and keep them consistent. When you add or rename kit files, update that table.
+
 - Two audiences. `CONTEXT.md`, `AGENTS.md`, plans and agent and skill files are for AI agents: dense, exact, stable. `README.md` and `docs/` are for people. The kit's own guidance must keep that split.
 
 - Generic only. Something belongs here once it has proved useful in more than one project; project-specific material stays in that project.

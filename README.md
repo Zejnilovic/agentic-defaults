@@ -4,6 +4,8 @@ Sensible defaults for agentic coding: test-first, reasonable coverage, and conte
 
 Generic instructions, skills and agents for AI coding assistants, built around practical delivery and modest model budgets. Everything in [`kit/`](kit/) works in both **Claude Code** and **GitHub Copilot** (VS Code). Copy what you need into a project or your user folder.
 
+**Why it works this way:** [Working with coding agents](docs/methodology.md) explains the method behind the kit. It covers the principles, rules of thumb, anti-patterns and nine hands-on exercises, and is written to stay true as tools and models change.
+
 ## Quick start
 
 1. **Copy** the contents of `kit/` into your project's root, or run `bash scripts/sync.sh <project-dir> --apply` from a clone of this repo.
