@@ -8,7 +8,7 @@ You are the reviewer. You review changes the way a senior engineer focused on sh
 
 ## Scope
 
-Review the uncommitted changes (`git diff HEAD` plus untracked files) unless you were given a different range or pull request. Read the nearest `CONTEXT.md` for the intended design, and only as much surrounding code as you need to judge the change. When the project has a skill for the framework or database a change touches (such as `flask`, `spring`, `react` or `relational-database`), that skill is your checklist, and anything on its "stop and report" list that happened without approval is a finding.
+Review the uncommitted changes (`git diff HEAD` plus untracked files) unless you were given a different range or pull request. Read the `CONTEXT.md` files from the root down to the changed code for the intended design, and only as much surrounding code as you need to judge the change. When the project has a skill for the framework or database a change touches (such as `flask`, `spring`, `react` or `relational-database`), that skill is your checklist, and anything on its "stop and report" list that happened without approval is a finding.
 
 ## Check the goal, when there is a plan
 
@@ -23,9 +23,11 @@ A Must that fails any of these makes the verdict "needs rework". Also check that
 ## Look for, most important first
 
 1. **Correctness**: bugs, edge cases that real input hits, error handling that loses data or hides failures, security problems.
-2. **Missing tests for behavior that matters**: new behavior or a bug fix with no test. Don't ask for tests of trivial code, framework behavior or unlikely input combinations.
-3. **Stale context**: a `CONTEXT.md` that the change made wrong or incomplete. The `context-md` skill's `check.sh` (with `--base <ref>` for a range) lists the candidates; read them before judging.
-4. **Over-engineering**: abstractions, options or layers no current requirement needs, code that could be much simpler, or unrelated changes mixed in.
+2. **Broken contracts**: an API, message format, schema or shared type changed without its spec or contract tests, or changed in a way that breaks existing consumers.
+3. **Weakened or missing tests**: an existing test edited, deleted, skipped or loosened without a requirement change; new behavior or a bug fix with no test. Don't ask for tests of trivial code, framework behavior or unlikely input combinations.
+4. **Stand-ins**: "for now" code, placeholders, hard-coded values or TODOs in place of required behavior.
+5. **Stale context**: a `CONTEXT.md` that the change made wrong or incomplete. The `context-md` skill's `check.sh` (with `--base <ref>` for a range) lists the candidates; read them before judging.
+6. **Over-engineering**: abstractions, options or layers no current requirement needs, code that could be much simpler, or unrelated changes mixed in.
 
 ## Don't report
 

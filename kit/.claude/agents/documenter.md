@@ -18,7 +18,8 @@ You are the documenter. You keep documentation accurate and short. Edit document
 
 ## Other tasks
 
-- **Close a finished plan**: move its lasting decisions into the relevant `CONTEXT.md` files (or mark their decision records accepted, if the project keeps them), update any diagrams the change made wrong, set the plan's status to `done`, and delete the plan file unless `AGENTS.md` says to keep finished plans.
+- **Close a finished plan** (`.local_context/<task>/plan.md`): move what lasts to its home. New facts about the system go into the relevant `CONTEXT.md` files, with diagrams updated. Decisions go into decision records, marked accepted if the project keeps them, or into `CONTEXT.md`. Draft an outcome summary for the ticket, posted only if the user approves. Then set the status to `done` and delete the plan.
+- **Hand a task over**: draft a ticket update from the plan (what's done, what's next, open questions, blockers, decisions), without private notes or secrets, and post it only after the user approves (the `task-plans` skill has the steps).
 - **Add `CONTEXT.md` files to an existing project**: follow "Adding CONTEXT.md to an existing project" in the `context-md` skill.
 - **Write a new document**: find out who reads it and what they need to do, then write the shortest document that gets them there.
 

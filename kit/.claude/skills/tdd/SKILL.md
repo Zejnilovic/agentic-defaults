@@ -41,8 +41,23 @@ Stop when the next test would only re-prove what an existing test already covers
 
 - Unit tests for logic with branches.
 - An integration test for wiring: one test that the pieces connect beats mocks asserting each call.
+- A contract test where parts meet (an API, a message, a schema): it checks both sides against the contract, so neither side repeats the other's tests.
 - Mock at the boundaries (network, clock, external services), not the code you own when the real thing is fast.
 - Follow the project's existing test style, file locations and helpers.
+
+## Keep tests contained
+
+A small change should break the tests for that behavior, not thirty tests in twenty files.
+
+- Test through stable interfaces: the public function, the endpoint, what the user sees. Not private helpers, internal state or call order.
+- Test each behavior in one place, at the lowest level that can show it. Don't repeat the same check in every layer.
+- Build test data with the project's shared builders or factories, or add one, so a changed data shape is a single edit.
+- Mock only what you don't own.
+- If a change breaks many tests that don't test the changed behavior, stop and report it. The fix is how the tests are built, not editing each one.
+
+## Never weaken a test
+
+A failing test means the code is wrong, unless the requirement changed. Never edit, delete, skip or loosen an existing test to make it pass. If the requirement did change, say so and wait for the user to agree before changing the test.
 
 ## When test-first doesn't fit
 

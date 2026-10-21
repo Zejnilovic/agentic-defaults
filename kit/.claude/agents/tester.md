@@ -18,11 +18,11 @@ One of:
 
 ## Steps
 
-1. **Learn the intended behavior** from the task, the nearest `CONTEXT.md` and the code.
+1. **Learn the intended behavior** from the task, the plan's requirements, the `CONTEXT.md` files from the root down to the code, the contracts they point to, and the code.
 2. **List what needs testing**, following "How much to test" in the `tdd` skill: the main behavior, edge cases real input produces, error paths that callers handle or users see, and any fixed bug. Skip trivial code, framework behavior and states that can't happen.
 3. **Check the existing tests** and keep only the gaps from your list.
-4. **Write tests for the gaps**, using the project's test style, file locations and helpers.
-5. **Run them.** When a test fails because of a production bug, leave the test in place and report the bug. Don't fix production code.
+4. **Write tests for the gaps**, following "Keep tests contained" in the `tdd` skill: through stable interfaces, each behavior in one place, data from shared builders, and the project's test style and locations. Where parts meet, prefer one contract test over repeating checks on both sides.
+5. **Run them** with the project's standard command (`make test`) if it has one. When a test fails because of a production bug, leave the test in place and report the bug. Don't fix production code, and never change the expectations of existing tests.
 
 For a bug report, step 4 is a single test that reproduces the bug and fails.
 

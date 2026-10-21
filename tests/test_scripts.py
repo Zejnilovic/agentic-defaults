@@ -1,5 +1,6 @@
 """Behavior tests for the kit's shell scripts. Run: python3 -m unittest discover -s tests"""
 
+import json
 import os
 import pathlib
 import re
@@ -107,6 +108,38 @@ class ContextCheckTest(GitRepoCase):
         self.assertNotIn("backend/CONTEXT.md", self.check().stdout)
         self.assertIn("backend/CONTEXT.md", self.check("--base", "main").stdout)
 
+    # Hook mode speaks the JSON both Claude Code (Stop) and GitHub Copilot (agentStop) accept:
+    # exit 0, and {"decision": "block", "reason": ...} on stdout to make the agent continue.
+    def hook(self, stdin='{"hook_event_name": "Stop", "stop_hook_active": false}'):
+        result = subprocess.run(["bash", str(CONTEXT_CHECK), "--hook"], cwd=self.root, env=GIT_ENV,
+                                input=stdin, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return json.loads(result.stdout) if result.stdout.strip() else {}
+
+    def test_hook_blocks_once_with_the_files_to_check(self):
+        write(self.root, "backend/api/orders.py", "changed\n")
+        output = self.hook()
+        self.assertEqual(output["decision"], "block")
+        self.assertIn("backend/CONTEXT.md", output["reason"])
+        self.assertEqual(self.hook(), {}, "the same finding must not block twice")
+
+    def test_hook_blocks_again_when_the_finding_changes(self):
+        write(self.root, "backend/api/orders.py", "changed\n")
+        self.assertEqual(self.hook()["decision"], "block")
+        write(self.root, "scripts/deploy.sh", "changed\n")
+        self.assertEqual(self.hook()["decision"], "block")
+
+    def test_hook_never_blocks_a_continuation(self):
+        write(self.root, "backend/api/orders.py", "changed\n")
+        self.assertEqual(self.hook('{"hookEventName": "agentStop", "stop_hook_active": true}'), {})
+
+    def test_hook_passes_when_nothing_to_check(self):
+        self.assertEqual(self.hook(), {})
+
+    def test_hook_reason_is_valid_json_with_awkward_paths(self):
+        write(self.root, 'backend/api/say "hi"\\now.py', "new\n")
+        self.assertIn("backend/CONTEXT.md", self.hook()["reason"])
+
     def test_reports_code_with_no_context_at_all(self):
         os.remove(os.path.join(self.root, "CONTEXT.md"))
         self.commit("drop root context")
@@ -160,6 +193,23 @@ class SyncTest(unittest.TestCase):
         write(self.project, "AGENTS.md", "# Our own rules\n")
         self.sync("--apply")
         self.assertEqual(pathlib.Path(self.project, "AGENTS.md").read_text(), "# Our own rules\n")
+
+    def test_ignore_file_keeps_unwanted_kit_files_out(self):
+        write(self.project, ".agentic-defaults-ignore",
+              "# This project has no Spring backend\n.claude/agents/spring-developer.md\n.claude/skills/spring/*\n")
+        result = self.sync("--apply")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(os.path.exists(os.path.join(self.project, ".claude/agents/spring-developer.md")))
+        self.assertFalse(os.path.exists(os.path.join(self.project, ".claude/skills/spring/SKILL.md")))
+        self.assertTrue(os.path.exists(os.path.join(self.project, ".claude/agents/flask-developer.md")))
+        self.assertIn("2 ignored", self.sync().stdout)
+
+    def test_existing_only_completes_skill_folders_the_project_has(self):
+        write(self.project, ".claude/skills/project-scan/SKILL.md", "outdated\n")
+        self.sync("--apply", "--existing-only")
+        self.assertTrue(os.path.exists(os.path.join(self.project, ".claude/skills/project-scan/survey.sh")))
+        self.assertTrue(os.path.exists(os.path.join(self.project, ".claude/skills/project-scan/Makefile.template")))
+        self.assertFalse(os.path.exists(os.path.join(self.project, ".claude/skills/tdd/SKILL.md")))
 
     def test_existing_only_updates_without_adding(self):
         write(self.project, ".claude/skills/tdd/SKILL.md", "outdated\n")
@@ -247,7 +297,21 @@ class VersionTest(GitRepoCase):
         self.assertEqual(self.read("VERSION"), "1.0.0\n")
 
 
-class SurveyTest(unittest.TestCase):
+class SurveyTest(GitRepoCase):
+    def test_lists_contract_files(self):
+        write(self.root, "api/openapi.yaml", "openapi: 3.1.0\n")
+        write(self.root, "proto/orders.proto", "syntax = \"proto3\";\n")
+        write(self.root, "src/app.py", "x\n")
+        result = run(["bash", str(SURVEY), self.root], self.root)
+        self.assertIn("## Contracts", result.stdout)
+        self.assertIn("api/openapi.yaml", result.stdout)
+        self.assertIn("proto/orders.proto", result.stdout)
+
+    def test_reports_missing_standard_commands(self):
+        write(self.root, "Makefile", "test:\n\tpytest\nlint:\n\truff .\n")
+        result = run(["bash", str(SURVEY), self.root], self.root)
+        self.assertIn("Missing standard make targets: setup run build format check", result.stdout)
+
     def test_runs_on_this_repository(self):
         result = run(["bash", str(SURVEY), str(REPO)], REPO)
         self.assertEqual(result.returncode, 0, result.stderr)

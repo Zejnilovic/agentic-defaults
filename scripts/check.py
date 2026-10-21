@@ -6,6 +6,7 @@ always-on word budget, shell script syntax, and (when mmdc is installed) Mermaid
 Exits 1 if any problem is found.
 """
 
+import json
 import os
 import pathlib
 import re
@@ -156,6 +157,12 @@ else:
 words = len(agreement.split())
 if words > AGREEMENT_WORD_BUDGET:
     problems.append(f"kit/AGENTS.md has {words} words, over the {AGREEMENT_WORD_BUDGET}-word budget")
+
+for path in KIT.rglob("*.json"):
+    try:
+        json.loads(path.read_text())
+    except ValueError as error:
+        problems.append(f"{rel(path)}: invalid JSON: {error}")
 
 for script in [*KIT.rglob("*.sh"), *(REPO / "scripts").glob("*.sh")]:
     result = subprocess.run(["bash", "-n", str(script)], capture_output=True, text=True)

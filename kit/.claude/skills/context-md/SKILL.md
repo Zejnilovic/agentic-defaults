@@ -18,12 +18,18 @@ A `CONTEXT.md` gives an AI agent what it can't quickly learn from the code: what
 - Only stable facts. Leave out what goes stale on its own: test counts, coverage numbers, open issues, current status, "last updated" dates. The test run, the issue tracker and git hold those.
 - No content a quick read of the code gives: lists of every function, file-by-file descriptions.
 
-## Where
+## Where: levels that get more concrete
 
-- One at the repository root: an index of the system that points to the rest. The `project-scan` skill describes its shape.
-- One in each area whose design isn't obvious from the code, typically a module, package, service, or the backend and frontend of an app.
-- Not every folder needs one. No `CONTEXT.md` is better than one that restates the file list.
-- Agents read the nearest one, walking up from the file they're changing, so put detail where it's used: backend detail in `backend/CONTEXT.md`, not the root.
+- **Root**: an index of the system that points to the rest. The `project-scan` skill describes its shape.
+- **Area** (`backend/`, `ui/`, a service or package): how that area is built, its conventions and traps.
+- **Module** (`backend/billing/`): that module's rules, only when they aren't obvious from its code.
+- Each level adds only what is specific to it and never repeats its parent. Start each file below the root with a line pointing to its parent, such as `Parent: ../CONTEXT.md`.
+- Agents read the chain from the root down to the folder they're changing, so put detail where it's used: backend detail in `backend/CONTEXT.md`, not the root.
+- Not every folder needs one. Add a level only when it says something its parent doesn't; every level costs tokens on every read.
+
+## Link the real documents
+
+A `CONTEXT.md` is a map. Point to the documents that hold the detail (decision records, API specifications such as OpenAPI files, schema files, guides in `docs/`) with a one-line summary each, instead of restating them. A link stays right when the document changes; a copy doesn't.
 
 ## Size
 
@@ -52,12 +58,17 @@ Update it in the same change when you:
 
 No update is needed for internal refactors, bug fixes that restore documented behavior, or test-only changes.
 
-## How to update
+## The context check: the last step of every task
 
-1. Find the affected files: the nearest `CONTEXT.md` above each changed file, plus the root one if the change crosses areas. [check.sh](check.sh) lists them: `bash <this skill's folder>/check.sh` for uncommitted changes, add `--base origin/main` for a branch. It flags candidates; you decide whether each needs an update.
-2. Edit only what is now wrong or missing. Don't rewrite whole files.
-3. Delete statements that are no longer true. Stale context is worse than none.
+Agents maintain these files, because agents are who reads them. Every task ends with this check, before reporting done:
+
+1. Run [check.sh](check.sh): `bash <this skill's folder>/check.sh` for uncommitted changes, with `--base origin/main` for a branch. It lists the nearest `CONTEXT.md` above each changed code file that wasn't itself changed.
+2. For each one listed, and for the root one if the change crosses areas, decide whether your change made it wrong or incomplete.
+3. Edit only what is now wrong or missing; don't rewrite whole files. Delete statements that are no longer true: stale context is worse than none.
 4. If a directory has gained non-obvious design and has no `CONTEXT.md`, create one from the template.
+5. In your report, say which files you updated, or in one line why none needed it.
+
+The same script can enforce the check automatically: `--strict` fails a pre-commit hook or CI job, and `--hook` reminds an agent at the end of its turn. The kit's README shows how to set these up.
 
 ## Adding CONTEXT.md to an existing project
 

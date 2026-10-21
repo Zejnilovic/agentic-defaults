@@ -17,6 +17,7 @@ Follow the project first. Read the UI's `CONTEXT.md`, find the closest existing 
 ## State and effects
 
 - Server data goes through the project's data-fetching library, refreshed or invalidated after writes. Don't copy it into `useState`.
+- Type API data from the contract. If the project generates types or clients from the API spec, regenerate them instead of editing them by hand.
 - Compute derived values during render instead of syncing them with `useEffect`. Effects are for talking to things outside React (subscriptions, timers, DOM APIs), with complete dependency arrays and cleanup.
 - Keep state as local as possible. Context is for app-wide things such as auth and theme, not a general store.
 - Add `useMemo`, `useCallback` or `memo` only for a re-render problem you have actually seen.

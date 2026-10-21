@@ -1,7 +1,8 @@
 # <Task title>
 
 Status: discovery | planned | in progress | done
-Notes: `.local_context/<slug>/` (not committed)
+Ticket: <link or number>
+Notes: this folder, `.local_context/<slug>/` (never committed)
 
 ## Goal
 
@@ -9,7 +10,7 @@ Notes: `.local_context/<slug>/` (not committed)
 
 ## Context
 
-<What exists today and what constrains the change. Link the relevant CONTEXT.md files. Add a diagram of the current flow if it helps.>
+<What exists today and what constrains the change. Link the relevant CONTEXT.md files, decision records and specs. Add a diagram of the current flow if it helps.>
 
 ## Requirements
 
@@ -22,12 +23,16 @@ Notes: `.local_context/<slug>/` (not committed)
 
 ## Approach
 
-<What will be built and why. Alternatives considered, one line each. A diagram of the new design if it helps.>
+<What will be built and why. Alternatives considered, one line each. The contract that changes, if any. A diagram of the new design if it helps.>
 
 ## Steps
 
-- [ ] 1. <What changes>. Agent: <e.g. relational-database-developer, flask-developer, react-developer, developer>. Files: <paths>. Test: <behavior the test proves>. Verify: `<command that proves it>`. Done when: <observable result>.
+- [ ] 1. <What changes>. Agent: <e.g. developer, flask-developer, react-developer>. Files: <paths>. Test: <behavior the test proves>. Verify: `<command that proves it>`. Done when: <observable result>.
 - [ ] 2. ...
+
+## Blockers
+
+- Step <n>: <what blocks it>. Tried: <what>. Evidence: <what>. Options: <split | spike | re-plan | visible limit, with cost>.
 
 ## Risks
 
@@ -35,4 +40,4 @@ Notes: `.local_context/<slug>/` (not committed)
 
 ## Decisions
 
-- <Decision>, because <reason>. Record in: <path to CONTEXT.md, or the decision record if the project keeps them>.
+- <Decision>, because <reason>. Record in: <decision record, or CONTEXT.md path>.

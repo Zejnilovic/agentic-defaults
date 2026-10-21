@@ -9,15 +9,17 @@ Generic instructions, skills and agents for AI coding assistants, built around p
 ## Quick start
 
 1. **Copy** the contents of `kit/` into your project's root, or run `bash scripts/sync.sh <project-dir> --apply` from a clone of this repo.
-2. **Scan** the project: ask your assistant to "use the analyst to scan this project". It writes the root `CONTEXT.md` and fills in the build and test commands in `AGENTS.md`. Review both.
-3. **Work.** For small changes, just chat; the working agreement applies. For bigger ones, put your notes in `.local_context/<task>/` and follow [How work flows](#how-work-flows).
+2. **Scan** the project: ask your assistant to "use the analyst to scan this project". It writes the root `CONTEXT.md`, fills in the [standard commands](#standard-commands) in `AGENTS.md`, and proposes any that are missing. Review both.
+3. **Work.** For small changes, just chat; the working agreement applies. For bigger ones, give it the ticket number or put your notes in `.local_context/<task>/`, and follow [How work flows](#how-work-flows).
 
 ## How it's organized
 
 - **Instructions** are loaded into every conversation, so they stay short. They hold the working agreement.
 - **Skills** are practices, such as TDD, debugging, diagrams and project scans. They load only when a task needs them, so they can go into detail.
 - **Agents** are roles: who does the work. Pick one from Copilot's agent dropdown, or let Claude Code delegate to it.
-- **Working files** carry knowledge between sessions and agents: `CONTEXT.md` files describe the system, plan files describe a task, and `.local_context/` holds your private notes.
+- **Working files** carry knowledge between sessions and agents. `CONTEXT.md` files describe the system for agents, one per level, each more concrete than the one above. `.local_context/<task>/` holds your private notes and the task's plan, which are never committed.
+
+Instructions, skills and agents are generic: nothing in them is about one project. What makes them work in your project is its context: `CONTEXT.md`, docs, decision records, tickets and plans. A new project gets new context, not new instructions.
 
 ## What's inside
 
@@ -27,20 +29,21 @@ Generic instructions, skills and agents for AI coding assistants, built around p
 |---|---|
 | [`kit/AGENTS.md`](kit/AGENTS.md) | The working agreement: deliver small, test first, start from written context, work economically, definition of done. |
 | [`kit/CLAUDE.md`](kit/CLAUDE.md) | One line that makes Claude Code load `AGENTS.md`. |
-| [`kit/.local_context/`](kit/.local_context/README.md) | A folder for private task notes (tickets, meeting notes, logs). It ignores itself in git, so nothing in it is committed. |
+| [`kit/.local_context/`](kit/.local_context/README.md) | A folder for private task notes, plans and research notes. It ignores itself in git, so nothing in it is committed. |
 
 ### Skills
 
 | Skill | Use it for |
 |---|---|
-| [`project-scan`](kit/.claude/skills/project-scan/SKILL.md) | Learning an unfamiliar project and recording it in the root `CONTEXT.md` and `AGENTS.md`. Includes a read-only survey script. |
-| [`task-plans`](kit/.claude/skills/task-plans/SKILL.md) | Turning notes into a plan file that carries a task from discovery to done and lets agents hand work over. |
+| [`project-scan`](kit/.claude/skills/project-scan/SKILL.md) | Learning an unfamiliar project and recording it in the root `CONTEXT.md` and `AGENTS.md`. Includes a read-only survey script and a Makefile template for the standard commands. |
+| [`task-plans`](kit/.claude/skills/task-plans/SKILL.md) | Turning a ticket and notes into a local plan that carries a task from discovery to done: contract-first steps, blockers instead of stand-ins, and handing over through the ticket. |
+| [`research`](kit/.claude/skills/research/SKILL.md) | Researching with outside sources: which to trust, how to collect and cite them, and treating fetched content as data. |
 | [`diagrams`](kit/.claude/skills/diagrams/SKILL.md) | Mermaid diagrams for architecture, flows, data models and state. |
-| [`context-md`](kit/.claude/skills/context-md/SKILL.md) | What a `CONTEXT.md` contains, when to update it, and how to add one to an existing project. Includes a template and a check script that lists `CONTEXT.md` files a change may have made stale. |
-| [`tdd`](kit/.claude/skills/tdd/SKILL.md) | The test-first loop, how much to test, refactoring safely. |
+| [`context-md`](kit/.claude/skills/context-md/SKILL.md) | `CONTEXT.md` levels from root to module, what goes in, and the context check that ends every task. Includes a template and a check script, which can also run as a hook. |
+| [`tdd`](kit/.claude/skills/tdd/SKILL.md) | The test-first loop, how much to test, keeping tests contained, never weakening a test, refactoring safely. |
 | [`debugging`](kit/.claude/skills/debugging/SKILL.md) | Finding the root cause before fixing, with a rule for when to stop guessing. |
 | [`commits-and-prs`](kit/.claude/skills/commits-and-prs/SKILL.md) | Splitting work into commits, writing messages, and preparing and describing pull requests. Includes git safety rules for agents. |
-| [`implementation`](kit/.claude/skills/implementation/SKILL.md) | The shared working rules of all developer agents: deliver fully, handle unplanned problems, dependencies, when to stop, what to report. |
+| [`implementation`](kit/.claude/skills/implementation/SKILL.md) | The shared working rules of all developer agents: deliver fully, contracts first, handle unplanned problems and walls, tests that break, dependencies, when to stop, what to report. |
 | [`flask`](kit/.claude/skills/flask/SKILL.md) | Python and Flask: app factory, validation, record-level access checks, SQLAlchemy sessions and N+1, background work, pytest. |
 | [`spring`](kit/.claude/skills/spring/SKILL.md) | Java and Spring Boot: DTOs, Bean Validation, Spring Security, `@Transactional` pitfalls, JPA fetching, MockMvc and Testcontainers. |
 | [`react`](kit/.claude/skills/react/SKILL.md) | React: reuse what exists, all four data states, state and effects, forms, accessibility, security, React Testing Library. |
@@ -50,48 +53,57 @@ Generic instructions, skills and agents for AI coding assistants, built around p
 
 | Role | Does | Edits | Model tier |
 |---|---|---|---|
-| [`analyst`](kit/.claude/agents/analyst.md) | Scans the project, and turns task notes into the discovery part of a plan. | Docs and plans | Everyday |
-| [`architect`](kit/.claude/agents/architect.md) | Designs the approach and writes steps, diagrams and decisions into the plan. | Plans and design docs | Strong |
+| [`analyst`](kit/.claude/agents/analyst.md) | Scans the project, and turns a ticket and notes into the discovery part of a plan. | Docs and plans | Everyday |
+| [`research-collector`](kit/.claude/agents/research-collector.md) | Gathers sources on a question into notes, for the researcher or a person. Doesn't judge. | Research notes | Everyday |
+| [`researcher`](kit/.claude/agents/researcher.md) | Answers a question that needs outside knowledge: options, a recommendation, confidence and sources. | Research notes | Strong |
+| [`architect`](kit/.claude/agents/architect.md) | Designs the approach, contract first, writes steps, diagrams and decisions into the plan, and decides blockers. | Plans and design docs | Strong |
 | [`relational-database-developer`](kit/.claude/agents/relational-database-developer.md) | Schema changes, migrations, indexes, queries and data fixes, with strict stop rules for anything irreversible. | Migrations, queries, tests | Everyday |
 | [`flask-developer`](kit/.claude/agents/flask-developer.md) | Python Flask endpoints, services, jobs and integrations. | Server code, tests, docs | Everyday |
 | [`spring-developer`](kit/.claude/agents/spring-developer.md) | Java Spring Boot controllers, services, repositories and configuration. | Server code, tests, docs | Everyday |
 | [`react-developer`](kit/.claude/agents/react-developer.md) | React pages, components, hooks, forms and API calls. | UI code, tests, docs | Everyday |
 | [`developer`](kit/.claude/agents/developer.md) | Anything no framework developer covers: scripts, tools, libraries, infrastructure, other stacks. | Code, tests, docs | Everyday |
 | [`tester`](kit/.claude/agents/tester.md) | Finds untested behavior that matters, writes the tests, reports bugs. | Tests only | Everyday |
-| [`reviewer`](kit/.claude/agents/reviewer.md) | Checks that a plan's goal was actually met, and reviews a change for bugs, missing tests, stale docs and over-engineering. | Nothing | Strong |
+| [`reviewer`](kit/.claude/agents/reviewer.md) | Checks that a plan's goal was actually met, and reviews a change for bugs, broken contracts, weakened tests, stand-ins, stale docs and over-engineering. | Nothing | Strong |
 | [`security-reviewer`](kit/.claude/agents/security-reviewer.md) | Reviews a change for exploitable security problems, reporting only those with a plausible attack path. | Nothing | Strong |
-| [`documenter`](kit/.claude/agents/documenter.md) | Keeps `CONTEXT.md` and docs true to the code, and closes finished plans. | Docs only | Everyday |
+| [`documenter`](kit/.claude/agents/documenter.md) | Keeps `CONTEXT.md` and docs true to the code, closes finished plans, and drafts ticket updates for handover. | Docs only | Everyday |
 
 ## How work flows
 
-**Once per project**, have the analyst scan it. That produces the root `CONTEXT.md` (purpose, stack, structure, a diagram) and the build and test commands in `AGENTS.md`. Every later task starts from there.
+**Once per project**, have the analyst scan it. That produces the root `CONTEXT.md` (purpose, stack, structure, contracts, a diagram) and the standard commands in `AGENTS.md`. Every later task starts from there.
 
-**Per task**, put your notes in `.local_context/<task>/` and go through the roles, skipping any the task doesn't need:
+**Per task**, give the ticket number or put your notes in `.local_context/<task>/`, and go through the roles, skipping any the task doesn't need:
 
 ```mermaid
 flowchart LR
+  ticket["Ticket"] -->|"fetched"| analyst
   notes[".local_context/csv-export/"] --> analyst
-  analyst -->|"Goal, Context"| plan["docs/plans/csv-export.md"]
+  analyst -->|"Goal, Requirements"| plan[".local_context/csv-export/plan.md"]
   plan --> architect
-  architect -->|"Approach, Steps"| plan
+  architect -->|"contract first, Steps"| plan
   plan --> developer
-  developer -->|"ticks steps"| plan
+  developer -->|"ticks steps, blockers"| plan
   developer --> tester --> reviewer --> documenter
-  documenter -->|"decisions"| ctx["CONTEXT.md"]
+  documenter -->|"facts, decisions"| ctx["CONTEXT.md, ADRs"]
+  documenter -.->|"outcome, if approved"| ticket
 ```
 
-1. **Analyst** reads your notes and the code, and writes the plan's Goal, Context, Requirements and Open questions.
-2. **Architect** answers the open questions, designs the approach and writes the Steps.
-3. **Developers** implement one or a few steps at a time. Each step names its agent, and the architect orders steps database, then backend, then frontend: "relational-database-developer: implement step 1 of `docs/plans/csv-export.md`." All developers share the `implementation` skill's rules; each framework developer adds its framework's skill.
-4. **Tester** fills the gaps in coverage.
-5. **Reviewer** checks the result against the plan. Add the **security reviewer** when the change touches authentication, permissions, untrusted input, secrets, cryptography or dependencies; the reviewer tells you when.
-6. **Documenter** moves the plan's decisions into `CONTEXT.md` and closes the plan.
+1. **Analyst** fetches the ticket, reads your notes and the code, and writes the plan's Goal, Context, Requirements and Open questions.
+2. **Researcher**, only when the design depends on outside facts such as a library choice or an API. The **research collector** can gather the sources first, on an everyday model.
+3. **Architect** answers the open questions, designs the approach and writes the Steps. When the work crosses a boundary, step 1 changes only the contract.
+4. **Developers** implement one or a few steps at a time, each finished with the context check. Each step names its agent, in the order contract, database, backend, frontend: "relational-database-developer: implement step 2 of `.local_context/csv-export/plan.md`." All developers share the `implementation` skill's rules, and each framework developer adds its framework's skill. When a step hits a wall, the developer records it as a blocker and stops, and the architect or you decide how to continue.
+5. **Tester** fills the gaps in coverage.
+6. **Reviewer** checks the result against the plan. Add the **security reviewer** when the change touches authentication, permissions, untrusted input, secrets, cryptography or dependencies; the reviewer tells you when.
+7. **Documenter** moves what lasts into `CONTEXT.md` and decision records, drafts an outcome for the ticket, and deletes the plan.
+
+To hand a task to someone else mid-way, ask the documenter to draft a ticket update from the plan.
 
 Small changes need none of this: the working agreement and skills cover a normal chat. Roles don't call each other. Each one hands its result back to you, or to the main conversation, which keeps cost predictable.
 
 ## Keeping model costs down
 
-- **Cheap models read, strong models think.** The analyst (everyday model) digests the notes and code; the architect (strong model) reads only its short summary.
+- **Cheap models read, strong models think.** The analyst and the research collector (everyday model) digest notes, code and sources; the architect and the researcher (strong model) read only their short summaries.
+- **Orchestration is cheap.** The main conversation only routes steps to agents and collects their reports, so it can run on an everyday model. It passes blockers and design questions on to you or the architect instead of answering them.
+- **Short output.** Agents report the result first, one line per item, so their reports don't bloat the conversation that reads them.
 - **Think once, execute many times.** The architect writes steps concrete enough for an everyday model to carry out one at a time.
 - **The plan file is the handoff.** Agents get a path and step numbers instead of a pasted plan, and a fresh session picks up where the last one stopped.
 - **Prompts are written for everyday models**: numbered steps, an explicit output format, and clear points where the agent stops and reports instead of trying again.
@@ -101,6 +113,22 @@ Small changes need none of this: the working agreement and skills cover a normal
 
 - **Claude Code** reads each agent's `model` field: `sonnet` for strong roles and `haiku` for everyday ones. Change it to suit you; `inherit` uses the conversation's model.
 - **Copilot (VS Code)** doesn't read `model` from `.claude/agents` files, so an agent uses whichever model is selected in the chat. Use your everyday model by default and switch to a strong one for the architect and reviewers. To pin a model, copy the agent to `.github/agents/<name>.agent.md` and set `model` to a name from Copilot's model picker.
+
+## Claude Code and GitHub Copilot
+
+The kit is plain Markdown, shell scripts and JSON in the formats both tools read. Where they differ:
+
+| | Claude Code | GitHub Copilot (VS Code) |
+|---|---|---|
+| Working agreement | `CLAUDE.md` imports `AGENTS.md` | Reads `AGENTS.md` directly |
+| Skills | Loaded when relevant; an agent's `skills:` list preloads them | Reads `.claude/skills/` and loads them when relevant; ignores `skills:`, so each agent also names its skills and keeps a short fallback |
+| Agents | Subagents, chosen by their description or by name | Modes in the agent dropdown, or subagents once **Run Subagent** is enabled under Configure Tools |
+| Model per agent | The agent's `model:` field | The model selected in the chat, or `model` in a `.github/agents/<name>.agent.md` copy |
+| Scripts, `make`, `gh` | Run in the terminal | The same; agent mode runs terminal commands |
+| End-of-turn context check | A `Stop` hook you add to `.claude/settings.json` | `.github/hooks/context-check.json`, shipped with the kit |
+| Web research | Built-in web search and page fetching | The fetch tool for pages; without web access, the research agents fall back to local sources and say so |
+
+Copilot support follows the VS Code and GitHub documentation. Everything except the Copilot hook has been used in a project; check the hook in your first Copilot session.
 
 ## Where to copy
 
@@ -113,10 +141,17 @@ Small changes need none of this: the working agreement and skills cover a normal
 | Agents, per project | `.claude/agents/<name>.md` | `.claude/agents/<name>.md`, or `.github/agents/<name>.agent.md` |
 | Agents, personal | `~/.claude/agents/<name>.md` | `~/.claude/agents/<name>.md` or `~/.copilot/agents/<name>.agent.md` |
 | Local notes | `.local_context/` at the project root | Same |
+| End-of-turn context check | A Stop hook you add to `.claude/settings.json` ([snippet](#keeping-contextmd-current)) | `.github/hooks/context-check.json`, shipped with the kit |
 
 Copying the whole `kit/` folder into a project root gives both tools everything. Copy each skill as a whole folder, since it may contain a template or script. Agents refer to skills by name, so copy the skills an agent lists along with it.
 
-Keep only the framework pairs your project uses: a Flask and React project deletes `spring-developer.md` and `skills/spring/`. Fewer agents mean a shorter agent list in Copilot and less guessing when Claude Code picks one. To update later without bringing deleted pairs back, run sync with `--apply --existing-only`.
+Keep only the framework pairs your project uses: a Flask and React project deletes `spring-developer.md` and `skills/spring/`. Fewer agents mean a shorter agent list in Copilot and less guessing when Claude Code picks one. So that sync doesn't bring them back, list them in `.agentic-defaults-ignore` at the project root, and commit it:
+
+```text
+# No Spring backend in this project
+.claude/agents/spring-developer.md
+.claude/skills/spring/*
+```
 
 After copying, run a project scan to fill in the **This project** section of `AGENTS.md`, or fill it in by hand.
 
@@ -126,6 +161,23 @@ After copying, run a project scan to fill in the **This project** section of `AG
 - **An existing `CONTEXT.md` or architecture notes**: the project scan keeps their stable facts, splits them by area and drops volatile parts such as test counts and issue lists.
 - **Decision records** such as `docs/adr/`: the kit uses them instead of repeating decisions in `CONTEXT.md`.
 - **Folders of private notes** such as exported specs: move them into `.local_context/` so they can't be committed by accident.
+- **A `docs/plans/` folder from kit 0.1.0**: move each active plan to `.local_context/<task>/plan.md`, move finished plans' decisions into decision records or `CONTEXT.md`, and delete the folder. Remove the "Plans" line from **This project**.
+
+## Standard commands
+
+Every project should offer the same commands, each wrapping the project's real tools. Then one instruction, "run `make test`", works everywhere, for agents and people alike:
+
+| Command | Does |
+|---|---|
+| `make setup` | Install dependencies and prepare a local environment |
+| `make run` | Start the application locally |
+| `make build` | Build everything that ships |
+| `make test` | Run all tests; `make test T=<path>` runs one file or test |
+| `make lint` | Lint and type-check |
+| `make format` | Format the code |
+| `make check` | Everything that must pass before work is done |
+
+The working agreement defines done as "`make check` passes". The project scan reports which commands are missing and proposes them, using [Makefile.template](kit/.claude/skills/project-scan/Makefile.template); it never adds them without asking. Make is on nearly every macOS and Linux machine. On Windows, use it through WSL, or install it with a package manager.
 
 ## Updating a project's copy
 
@@ -135,17 +187,37 @@ Hand-copied files fall behind as the kit improves. From a clone of this repo:
 bash scripts/sync.sh ~/path/to/project
 ```
 
-It lists which kit files are missing, differ or are the same in the project. Add `--diff` to see the changes, and `--apply` to update. `--apply` replaces only the part of `AGENTS.md` above **This project**, never overwrites a `CLAUDE.md` that has its own content, and leaves files that aren't part of the kit alone. It does overwrite local tweaks to kit files, such as a changed model, so review the result with `git diff`. The first line of a project's `AGENTS.md` shows which kit version it came from, and [CHANGELOG.md](CHANGELOG.md) lists what changed since.
+It lists which kit files are missing, differ or are the same in the project. Add `--diff` to see the changes, and `--apply` to update. `--apply` replaces only the part of `AGENTS.md` above **This project**, never overwrites a `CLAUDE.md` that has its own content, skips paths listed in `.agentic-defaults-ignore`, and leaves files that aren't part of the kit alone. With `--existing-only` it adds no new agents or skills, but still completes the skill folders the project has. It does overwrite local tweaks to kit files, such as a changed model, so review the result with `git diff`. The first line of a project's `AGENTS.md` shows which kit version it came from, and [CHANGELOG.md](CHANGELOG.md) lists what changed since.
 
 ## Keeping CONTEXT.md current
 
-Agents are told to update `CONTEXT.md` as part of every change, and the reviewer checks for it. Instructions alone still slip, so the `context-md` skill ships a check script. It lists every `CONTEXT.md` whose area has code changes while the file itself didn't change:
+`CONTEXT.md` files are for agents, so agents keep them current: every task ends with a context check. Any single layer can slip, so the kit enforces it in several: the working agreement's definition of done, the developers' last step, the reviewer's checklist, and a check script in the `context-md` skill. The script lists every `CONTEXT.md` whose area has code changes while the file itself didn't change:
 
 ```bash
 bash .claude/skills/context-md/check.sh
 ```
 
-The developer, reviewer and documenter run it themselves. You can also run it automatically:
+Agents run it themselves. You can also run it automatically:
+
+- **At the end of each agent turn**, in both tools. When code changed and a `CONTEXT.md` didn't, the agent gets one reminder and either updates the file or says why none is needed. The same finding is never raised twice. The script's `--hook` mode prints `{"decision": "block", "reason": ...}`, which Claude Code's `Stop` hook and Copilot's `agentStop` hook both read as "keep working with this instruction".
+  - **GitHub Copilot** (VS Code, CLI and cloud agent): the kit ships [`.github/hooks/context-check.json`](kit/.github/hooks/context-check.json), so it is on as soon as the kit is copied. Copilot hooks are in preview in VS Code, an organization can restrict them, and the cloud agent only reads hooks from the default branch. The file follows GitHub's documentation but hasn't been tested in a real Copilot session yet. To turn it off, delete it and list it in `.agentic-defaults-ignore`.
+  - **Claude Code**: add a Stop hook to `.claude/settings.json` (shared with the team) or `.claude/settings.local.json` (just you), merged with what's already there. The kit doesn't ship this file, because syncing it would overwrite a project's own settings.
+
+  ```json
+  {
+    "hooks": {
+      "Stop": [
+        {
+          "hooks": [
+            { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/skills/context-md/check.sh\" --hook" }
+          ]
+        }
+      ]
+    }
+  }
+  ```
+
+  Copilot in VS Code also reads `.claude/settings.json`. If both hooks are set up, the second call finds the same finding and stays silent.
 
 - **Before each commit**, as a reminder that doesn't block. Save this as `.git/hooks/pre-commit` and make it executable:
 
@@ -176,7 +248,6 @@ npm install -g @mermaid-js/mermaid-cli
 
 - **Restrictions are instructions, not enforcement.** "Edits tests only" is written in the agent's text. To enforce it, add a `tools` list to the agent, for example `tools: Read, Grep, Glob, Bash` for a read-only reviewer. Claude Code uses these names directly, and VS Code maps them for files in `.claude/agents`. Check that the agent can still do its job afterwards.
 - **`skills` in an agent's frontmatter** preloads those skills in Claude Code. Copilot ignores the field and loads skills when they're relevant.
-- **Plans folder and retention** are set in the "This project" section of `AGENTS.md`.
 - **Another framework** (FastAPI, Django, Angular, Vue and so on) is a pair: a `<framework>` skill and a `<framework>-developer` agent. Copy the closest existing pair, keep the skill's sections (follow the project first, structure, the framework's own concerns, tests, stop and report before), and keep `implementation` in the agent's `skills` list so it follows the shared rules. Project-specific conventions go in the area's `CONTEXT.md`, not in the skill.
 
 ## Working on this repo

@@ -78,12 +78,25 @@ if [ -f package.json ]; then
   fi
 fi
 # Stop at the first match: on case-insensitive file systems Makefile and makefile are the same file.
+standard="setup run build test lint format check"
+makefile=""
 for f in GNUmakefile Makefile makefile; do
   if [ -f "$f" ]; then
+    makefile="$f"
     grep -E '^[A-Za-z0-9_.-]+:([^=]|$)' "$f" | cut -d: -f1 | grep -v '^[._]' | sort -u | head -20 | sed 's/^/- make /'
     break
   fi
 done
+if [ -n "$makefile" ]; then
+  missing=""
+  for target in $standard; do
+    grep -Eq "^$target:([^=]|$)" "$makefile" || missing="$missing $target"
+  done
+  echo
+  if [ -n "$missing" ]; then echo "Missing standard make targets:$missing"; else echo "All standard make targets present."; fi
+else
+  echo "No Makefile, so none of the standard make targets ($standard) exist yet."
+fi
 [ -f justfile ] && grep -E '^[A-Za-z0-9_-]+[^:=]*:([^=]|$)' justfile | cut -d' ' -f1 | cut -d: -f1 | head -20 | sed 's/^/- just /'
 if ls .github/workflows/*.y*ml >/dev/null 2>&1; then
   echo
@@ -92,6 +105,10 @@ if ls .github/workflows/*.y*ml >/dev/null 2>&1; then
   grep -hE '^[[:space:]]*(-[[:space:]]+)?run:[[:space:]]*[^|>[:space:]]' .github/workflows/*.y*ml \
     | sed -E 's/^[[:space:]]*(-[[:space:]]+)?run:[[:space:]]*//' | sort -u | head -15 | bullets
 fi
+
+section "Contracts"
+contracts=$(grep -Ei '(^|/)(openapi|swagger|asyncapi)[^/]*\.(ya?ml|json)$|\.proto$|\.graphqls?$|\.avsc$|\.schema\.json$' "$list" | head -20)
+if [ -n "$contracts" ]; then printf '%s\n' "$contracts" | bullets; else echo "None found by name (API specs, protobuf, GraphQL or JSON schemas)."; fi
 
 section "Tests"
 tests=$(grep -E '(^|/)(test|tests|__tests__|spec|specs|e2e|it)/|(^|/)test_[^/]+\.py$|_test\.[a-z]+$|\.(test|spec)\.[a-z]+$|Tests?\.(java|kt|cs|swift|scala)$|Spec\.(scala|kt|groovy)$' "$list")

@@ -20,6 +20,7 @@ Follow the project first. Read the backend's `CONTEXT.md` and one existing featu
 - Check access on the specific record, not just the role: `@PreAuthorize` with an ownership check, or an explicit check in the service.
 - Don't loosen the security configuration (`permitAll`, disabling CSRF, CORS wildcards) without approval.
 - Keep the API compatible: add fields, don't rename or remove them.
+- Keep the API contract accurate. If the project generates code from an OpenAPI file, change the file and regenerate; never edit generated code. If springdoc generates the spec from the code, keep DTOs and annotations complete so it matches the real behavior.
 
 ## JPA and transactions
 

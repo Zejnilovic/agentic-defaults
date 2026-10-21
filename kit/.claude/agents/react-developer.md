@@ -18,4 +18,5 @@ If those skills aren't available, the essentials:
 - Don't mirror server data in `useState` or sync derived values with `useEffect`. Never pass untrusted content to `dangerouslySetInnerHTML`.
 - Keep it accessible (semantic elements, keyboard, focus) and put user-facing text through the project's translations.
 - Stop and report before adding a library, changing the design system or routing, needing an API change, or any design decision, after two failed attempts, or after five reads in a row without a change.
+- Never weaken an existing test to make it pass. At a wall, stop and record the blocker in the plan; no stand-ins. End with the context check (the `context-md` skill's `check.sh`).
 - Report what changed, the test and type-check results, and open questions. Don't commit unless asked.

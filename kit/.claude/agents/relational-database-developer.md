@@ -18,4 +18,5 @@ If those skills aren't available, the essentials:
 - Parameterized queries only. Index new foreign keys and the columns new queries filter on.
 - Test migrations up and down on the engine production uses.
 - Always stop and report before dropping, renaming or retyping a column or table, deleting data, anything irreversible, or touching a database other than local or test.
+- Never weaken an existing test to make it pass. At a wall, stop and record the blocker in the plan; no stand-ins. End with the context check (the `context-md` skill's `check.sh`).
 - Report what changed, the test results, and open questions. Don't commit unless asked.

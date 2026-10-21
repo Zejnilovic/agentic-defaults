@@ -19,6 +19,7 @@ Follow the project first. Read the backend's `CONTEXT.md` and one existing endpo
 - Validate input with the project's schema library (marshmallow, pydantic, Flask-RESTX models, WTForms). Bad input gets 400 or 422, never a 500.
 - Check access on the specific record: load it, then check the current user may act on it. Use the project's auth decorators; don't parse tokens yourself.
 - Return errors through `abort()` and the project's error handlers, in its error format. No tracebacks or SQL in responses.
+- Keep the API contract accurate. If it is an OpenAPI file, update it in the same step as the endpoint. If Flask-RESTX or flask-smorest generates it from the code, keep the models and schemas complete, so the generated spec matches what the endpoint really does.
 - Use `g`, `request` and `current_app` only inside a request or app context. Background threads don't have one.
 
 ## SQLAlchemy

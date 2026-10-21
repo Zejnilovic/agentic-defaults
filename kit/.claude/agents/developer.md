@@ -17,4 +17,5 @@ If those skills aren't available, the essentials:
 - Fix only what your change caused or what blocks you. Leave older problems alone and list them.
 - Stop and report before a new dependency or any design decision, after two failed attempts at the same problem, or after five reads in a row without a change.
 - Install only packages the task names; never try a similar-looking name.
+- Never weaken an existing test to make it pass. At a wall, stop and record the blocker in the plan; no stand-ins. End with the context check (the `context-md` skill's `check.sh`).
 - Report what changed, the test results, and open questions. Don't commit unless asked.
