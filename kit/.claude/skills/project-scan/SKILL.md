@@ -3,7 +3,7 @@ name: project-scan
 description: Survey a repository to learn what it does, which technologies it uses, how it is structured, and how to build, test and run it, then record that in the root CONTEXT.md and AGENTS.md. Use when starting in an unfamiliar project, when there is no root CONTEXT.md, or when asked to refresh the project overview.
 ---
 
-<!-- From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project". -->
+<!-- From agentic-defaults. Kit updates replace this file except a "## This project" section at the end, which belongs to the project. Edit nothing else. Rules for all work go in AGENTS.md "This project". -->
 
 # Project scan
 

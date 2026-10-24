@@ -3,7 +3,7 @@ name: tdd
 description: Test-driven development loop and how much to test. Use when adding or changing behavior, fixing a bug, or deciding which tests a change needs.
 ---
 
-<!-- From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project". -->
+<!-- From agentic-defaults. Kit updates replace this file except a "## This project" section at the end, which belongs to the project. Edit nothing else. Rules for all work go in AGENTS.md "This project". -->
 
 # Test-driven development
 

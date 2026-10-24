@@ -3,7 +3,7 @@ name: relational-database
 description: Practices for relational databases (PostgreSQL, MySQL or MariaDB, SQLite) - schema changes, migrations with Alembic, Flyway, Liquibase or the framework's tool, constraints, indexes, queries and data fixes. Use when changing schema, writing a migration, tuning SQL, changing data in bulk, or reviewing such changes.
 ---
 
-<!-- From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project". -->
+<!-- From agentic-defaults. Kit updates replace this file except a "## This project" section at the end, which belongs to the project. Edit nothing else. Rules for all work go in AGENTS.md "This project". -->
 
 # Relational database
 

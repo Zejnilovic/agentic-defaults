@@ -63,7 +63,7 @@ Instructions say how to work. Knowledge says what this project is. Keep them apa
 
 - **Never put project facts in instructions.** Names of services, tables and commands, conventions and decisions all go in the project's context files. An instruction says "read the nearest context file and follow its conventions"; the context file says what they are.
 - **A new project gets new context, not new instructions.** Copy the same instructions, then write the project's context. A new framework means adding or swapping one framework layer, never editing the method.
-- **Never edit shared instructions inside a project.** A local edit is lost at the next update, and the copies drift apart. Mark shared files as shared, so agents know too. Project rules go in the project's own files; a change that would help every project goes back to the shared source.
+- **Change shared instructions inside a project only in their marked project parts.** An edit anywhere else is lost at the next update or blocks it, and the copies drift apart. Mark shared files as shared, so agents know too, and give them a few marked places that updates keep, such as a closing project section, the choice of model or the tools an agent may use. Project rules go in the project's own files; a change that would help every project goes back to the shared source.
 - **Give every project the same front door.** Use a small set of standard commands, such as `make setup`, `make build`, `make test`, `make lint` and `make run`, wrapping whatever each project really uses underneath. Then one instruction, "run `make test`", works in every project, and people get the same benefit. Make is decades old and available on nearly every developer machine. Any task runner works, as long as every project uses the same command names.
 
 ## 3. Context is a budget
@@ -214,7 +214,7 @@ The principles above are meant to stay stable. This table follows the kit's curr
 | Principle | In the kit |
 |---|---|
 | Memory lives in files | `AGENTS.md`; `CONTEXT.md` levels from root to module with the `context-md` skill; local plans and notes in `.local_context/<task>/` with the `task-plans` skill; tickets fetched by the analyst and updated at handover; the `diagrams` skill |
-| Generic instructions: kit files and project files | A "From agentic-defaults" marker on every kit file, and a rule that agents never edit kit files and put project rules in "This project" |
+| Generic instructions: kit files and project files | A "From agentic-defaults" marker on every kit file; a rule that agents edit kit files only in their project parts, an agent's `model:` and `tools:` lines and a closing `## This project` section, and put project rules in "This project" of `AGENTS.md` |
 | Memory lives in files: keeping it true | The context check as the last step of every task, in the definition of done, the `implementation` skill and the reviewer; `check.sh`, also as an end-of-turn hook in both Claude Code and Copilot, a pre-commit reminder or a CI step |
 | Generic instructions, specific knowledge | Roles and practices with no project facts; framework pairs such as `flask` and `flask-developer`; the standard `make` commands, with project specifics only in the "This project" section of `AGENTS.md` |
 | Context is a budget | A word budget for `AGENTS.md`; skills loaded on demand; `CONTEXT.md` levels; the "Work economically" rules, including short output; defined output formats in every agent |
@@ -223,4 +223,4 @@ The principles above are meant to stay stable. This table follows the kit's curr
 | Make the specification executable | Requirements written as observable behavior; contract-first plan steps; the `tdd` skill, with contained tests and never weakening a test; test-first framework developers |
 | Verify outcomes | The reviewer's goal check, contract and weakened-test checks; the security reviewer |
 | Bound the agent | The `implementation` skill's rules for unplanned work, walls and stopping; the database skill's hard stops; the dependency rules |
-| Improve the system | A versioned kit, `scripts/sync.sh`, `scripts/check.py` and tests |
+| Improve the system | A versioned kit in packs, installed and updated by [agd](https://github.com/Zejnilovic/agd), which keeps each project's own parts; `scripts/check.py` and tests |

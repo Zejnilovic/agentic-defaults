@@ -1,4 +1,4 @@
-<!-- agentic-defaults 0.3.0. From agentic-defaults down to "This project": sync replaces it, so don't edit it. The rest belongs to the project. -->
+<!-- agentic-defaults 0.4.0. From agentic-defaults down to "This project": kit updates replace it, so don't edit it. The rest belongs to the project. -->
 
 # Working agreement
 
@@ -16,7 +16,7 @@ These rules apply to every task here. Project facts live in `CONTEXT.md` files a
 
 ## Kit files
 
-Files and parts marked "From agentic-defaults" are replaced when the kit updates. Never edit them, and never tell the user to. Put project rules and commands in "This project", facts in the nearest `CONTEXT.md`, and project-only agents or skills in new files with their own names.
+Files and parts marked "From agentic-defaults" are replaced when the kit updates. Never edit them, and never tell the user to, except three project parts that updates keep: an agent's `model:` and `tools:` lines, and a `## This project` section at the end of a kit agent or skill. Put rules for all work in "This project" below, additions for one agent or skill in a `## This project` section at its end, facts in the nearest `CONTEXT.md`, and project-only agents or skills in new files with their own names.
 
 ## Test
 
@@ -48,7 +48,7 @@ Files and parts marked "From agentic-defaults" are replaced when the kit updates
 
 ## This project
 
-<!-- Belongs to the project; sync never changes it. Fill it in with a project scan or by hand. -->
+<!-- Belongs to the project; kit updates never change it. Fill it in with a project scan or by hand. -->
 
 ### Profile
 

@@ -3,7 +3,7 @@ name: diagrams
 description: Draw Mermaid diagrams in Markdown to show architecture, request flows, data models and state changes. Use when a structure or flow is easier to show than to describe, when writing a CONTEXT.md or plan, or when asked for a diagram.
 ---
 
-<!-- From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project". -->
+<!-- From agentic-defaults. Kit updates replace this file except a "## This project" section at the end, which belongs to the project. Edit nothing else. Rules for all work go in AGENTS.md "This project". -->
 
 # Diagrams with Mermaid
 

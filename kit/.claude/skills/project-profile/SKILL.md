@@ -3,7 +3,7 @@ name: project-profile
 description: The project profile (stage, audience, team, sensitive data) and which practices it calls for, so the engineering fits this project instead of a large enterprise. Use when deciding how much rigor a change needs, when a skill item carries a profile tag such as (production), when proposing a profile in a project scan, or when a design feels heavier than the project.
 ---
 
-<!-- From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project". -->
+<!-- From agentic-defaults. Kit updates replace this file except a "## This project" section at the end, which belongs to the project. Edit nothing else. Rules for all work go in AGENTS.md "This project". -->
 
 # Project profile
 

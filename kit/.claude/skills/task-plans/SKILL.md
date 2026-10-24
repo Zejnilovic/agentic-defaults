@@ -3,7 +3,7 @@ name: task-plans
 description: Turn a ticket and notes into a local plan file that carries the goal, design and step checklist from discovery to done, lets agents hand work over, and updates the ticket at handover. Use when starting work that spans several steps, sessions or agents, when turning .local_context notes into a plan, or when updating, handing over or closing a plan.
 ---
 
-<!-- From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project". -->
+<!-- From agentic-defaults. Kit updates replace this file except a "## This project" section at the end, which belongs to the project. Edit nothing else. Rules for all work go in AGENTS.md "This project". -->
 
 # Task plans
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project".
+# From agentic-defaults. Kit updates replace this file: don't edit it. Project rules go in AGENTS.md "This project".
 # Lists CONTEXT.md files that may need an update: code under them changed, but they didn't.
 # A nudge, not a verdict: internal refactors and bug fixes that restore documented behavior need no update.
 # Read-only. Works with bash 3.2 (macOS) and Git Bash (Windows).

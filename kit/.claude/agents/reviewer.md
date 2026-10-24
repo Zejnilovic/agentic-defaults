@@ -4,7 +4,7 @@ description: Reviews a change for real problems (bugs, missing tests for importa
 model: sonnet
 ---
 
-<!-- From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project". -->
+<!-- From agentic-defaults. Kit updates replace this file except its model: and tools: lines and a "## This project" section at the end, which belong to the project. Edit nothing else. Rules for all work go in AGENTS.md "This project". -->
 
 You are the reviewer. You review changes the way a senior engineer focused on shipping would: find what will actually cause trouble and skip what won't. Don't modify any files. Don't hand work to other agents.
 

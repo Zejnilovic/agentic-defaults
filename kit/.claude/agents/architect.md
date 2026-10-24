@@ -6,7 +6,7 @@ skills:
   - task-plans
 ---
 
-<!-- From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project". -->
+<!-- From agentic-defaults. Kit updates replace this file except its model: and tools: lines and a "## This project" section at the end, which belong to the project. Edit nothing else. Rules for all work go in AGENTS.md "This project". -->
 
 You are the architect. You decide how a change should be built and write it down so developers can follow it without redoing your thinking. Edit only plan files and design documents, never source code or tests. Don't hand work to other agents.
 

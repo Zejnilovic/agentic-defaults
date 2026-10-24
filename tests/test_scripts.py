@@ -17,6 +17,9 @@ SYNC = REPO / "scripts/sync.sh"
 
 GIT_ENV = {
     **os.environ,
+    # Ignore the user's and the system's git settings, such as signed tags.
+    "GIT_CONFIG_GLOBAL": "/dev/null",
+    "GIT_CONFIG_NOSYSTEM": "1",
     "GIT_AUTHOR_NAME": "Test",
     "GIT_AUTHOR_EMAIL": "test@example.com",
     "GIT_COMMITTER_NAME": "Test",
@@ -147,75 +150,16 @@ class ContextCheckTest(GitRepoCase):
         self.assertIn("No CONTEXT.md covers", self.check().stdout)
 
 
-class SyncTest(unittest.TestCase):
-    def setUp(self):
-        self._tmp = tempfile.TemporaryDirectory()
-        self.project = self._tmp.name
+class SyncStubTest(unittest.TestCase):
+    """scripts/sync.sh is replaced by agd: it only points there."""
 
-    def tearDown(self):
-        self._tmp.cleanup()
-
-    def sync(self, *args):
-        return run(["bash", str(SYNC), self.project, *args], REPO)
-
-    def test_report_lists_missing_files_and_changes_nothing(self):
-        result = self.sync()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("missing", result.stdout)
-        self.assertIn(".claude/skills/tdd/SKILL.md", result.stdout)
-        self.assertFalse(os.path.exists(os.path.join(self.project, "AGENTS.md")))
-
-    def test_apply_copies_everything_then_reports_in_sync(self):
-        self.assertEqual(self.sync("--apply").returncode, 0)
-        for rel in ["AGENTS.md", "CLAUDE.md", ".local_context/.gitignore", ".claude/agents/developer.md",
-                    ".claude/skills/project-scan/survey.sh"]:
-            self.assertTrue(os.path.exists(os.path.join(self.project, rel)), rel)
-        self.assertIn("0 differ, 0 missing, 0 to merge by hand", self.sync().stdout)
-
-    def test_apply_updates_agreement_but_keeps_this_project_section(self):
-        write(self.project, "AGENTS.md", "# Old agreement\n\nold rule\n\n## This project\n\n- Test: `make test`\n")
-        result = self.sync("--apply")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        text = pathlib.Path(self.project, "AGENTS.md").read_text()
-        self.assertNotIn("old rule", text)
-        self.assertIn("## Deliver", text)
-        self.assertIn("- Test: `make test`", text)
-        self.assertEqual(text.count("## This project"), 1)
-
-    def test_never_overwrites_custom_claude_md(self):
-        write(self.project, "CLAUDE.md", "@AGENTS.md\n\nExtra local rule\n")
-        result = self.sync("--apply")
-        self.assertIn("CLAUDE.md", result.stdout)
-        self.assertIn("by hand", result.stdout)
-        self.assertIn("Extra local rule", pathlib.Path(self.project, "CLAUDE.md").read_text())
-
-    def test_agreement_without_this_project_section_is_left_alone(self):
-        write(self.project, "AGENTS.md", "# Our own rules\n")
-        self.sync("--apply")
-        self.assertEqual(pathlib.Path(self.project, "AGENTS.md").read_text(), "# Our own rules\n")
-
-    def test_ignore_file_keeps_unwanted_kit_files_out(self):
-        write(self.project, ".agentic-defaults-ignore",
-              "# This project has no Spring backend\n.claude/agents/spring-developer.md\n.claude/skills/spring/*\n")
-        result = self.sync("--apply")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertFalse(os.path.exists(os.path.join(self.project, ".claude/agents/spring-developer.md")))
-        self.assertFalse(os.path.exists(os.path.join(self.project, ".claude/skills/spring/SKILL.md")))
-        self.assertTrue(os.path.exists(os.path.join(self.project, ".claude/agents/flask-developer.md")))
-        self.assertIn("2 ignored", self.sync().stdout)
-
-    def test_existing_only_completes_skill_folders_the_project_has(self):
-        write(self.project, ".claude/skills/project-scan/SKILL.md", "outdated\n")
-        self.sync("--apply", "--existing-only")
-        self.assertTrue(os.path.exists(os.path.join(self.project, ".claude/skills/project-scan/survey.sh")))
-        self.assertTrue(os.path.exists(os.path.join(self.project, ".claude/skills/project-scan/Makefile.template")))
-        self.assertFalse(os.path.exists(os.path.join(self.project, ".claude/skills/tdd/SKILL.md")))
-
-    def test_existing_only_updates_without_adding(self):
-        write(self.project, ".claude/skills/tdd/SKILL.md", "outdated\n")
-        self.sync("--apply", "--existing-only")
-        self.assertNotEqual(pathlib.Path(self.project, ".claude/skills/tdd/SKILL.md").read_text(), "outdated\n")
-        self.assertFalse(os.path.exists(os.path.join(self.project, ".claude/agents/developer.md")))
+    def test_points_to_agd_adopt_and_changes_nothing(self):
+        with tempfile.TemporaryDirectory() as project:
+            result = run(["bash", str(SYNC), project, "--apply"], REPO)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("agd", result.stderr)
+            self.assertIn(f"agd -C {project} adopt", result.stderr)
+            self.assertEqual(os.listdir(project), [])
 
 
 RELEASED_1_0_0 = "## Released\n\n- [1.0.0](https://github.com/example/kit/releases/tag/v1.0.0) (2026-01-01)\n"
@@ -280,6 +224,13 @@ class VersionTest(GitRepoCase):
     def test_new_untracked_kit_file_counts_as_a_change(self):
         write(self.root, "kit/.claude/skills/tdd/notes.md", "extra\n")
         self.assertEqual(self.check().returncode, 1)
+
+    def test_packs_change_after_release_needs_a_new_version(self):
+        write(self.root, "packs.txt", self.read("packs.txt") + "# Regrouped\n")
+        result = self.check()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("packs.txt", result.stdout)
+        self.assertIn("bump.sh", result.stdout)
 
     def test_changes_outside_kit_need_no_bump(self):
         write(self.root, "README.md", self.read("README.md") + "\nMore words.\n")
@@ -353,6 +304,105 @@ class VersionTest(GitRepoCase):
             result = self.bump(bad)
             self.assertNotEqual(result.returncode, 0, bad)
         self.assertEqual(self.read("VERSION"), "1.0.0\n")
+
+
+class CheckCopyCase(unittest.TestCase):
+    """Runs check.py on a copy of this repo outside git."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.root = self._tmp.name
+        shutil.copytree(REPO, self.root, dirs_exist_ok=True, ignore=shutil.ignore_patterns(".git", "__pycache__"))
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def check(self):
+        env = {**os.environ, "AGENTIC_DEFAULTS_SKIP_MERMAID": "1"}
+        return subprocess.run(["python3", "scripts/check.py"], cwd=self.root, env=env, capture_output=True, text=True)
+
+    def read(self, rel):
+        return pathlib.Path(self.root, rel).read_text()
+
+    def assert_fails(self, *expected):
+        result = self.check()
+        self.assertEqual(result.returncode, 1, result.stdout)
+        for text in expected:
+            self.assertIn(text, result.stdout)
+
+
+class CheckBudgetTest(CheckCopyCase):
+    def test_only_the_kit_part_of_the_agreement_counts(self):
+        agreement, filler = "kit/AGENTS.md", " word" * 200 + "\n"
+        write(self.root, agreement, self.read(agreement) + filler)
+        result = self.check()
+        self.assertEqual(result.returncode, 0, result.stdout)
+
+        write(self.root, agreement, self.read(agreement).replace("\n## This project", filler + "\n## This project", 1))
+        self.assert_fails("budget")
+
+
+class CheckPacksTest(CheckCopyCase):
+    """check.py's packs.txt rules."""
+
+    def edit_packs(self, old, new):
+        packs = self.read("packs.txt")
+        self.assertIn(old, packs)
+        write(self.root, "packs.txt", packs.replace(old, new, 1))
+
+    def test_kit_as_shipped_passes(self):
+        result = self.check()
+        self.assertEqual(result.returncode, 0, result.stdout)
+
+    def test_kit_file_in_no_pack_fails(self):
+        write(self.root, "kit/extra.txt")
+        self.assert_fails("kit/extra.txt", "packs.txt")
+
+    def test_kit_file_in_two_packs_fails(self):
+        self.edit_packs("pack flask requires core\n", "pack flask requires core\n  .claude/skills/tdd/\n")
+        self.assert_fails("kit/.claude/skills/tdd/SKILL.md", "core, flask")
+
+    def test_entry_matching_no_kit_file_fails(self):
+        self.edit_packs("pack flask requires core\n", "pack flask requires core\n  .claude/agents/ghost.md\n")
+        self.assert_fails(".claude/agents/ghost.md", "matches no file")
+
+    def test_unknown_required_pack_fails(self):
+        self.edit_packs("pack flask requires core", "pack flask requires core vue")
+        self.assert_fails("'vue'")
+
+    def test_required_packs_cannot_form_a_cycle(self):
+        self.edit_packs("pack core\n", "pack core requires flask\n")
+        self.assert_fails("cycle")
+
+    def test_agent_preloading_a_skill_outside_its_packs_fails(self):
+        self.edit_packs("pack flask requires core", "pack flask")
+        self.assert_fails("kit/.claude/agents/flask-developer.md", "'implementation'")
+
+    def test_skill_folder_split_across_packs_fails(self):
+        self.edit_packs("  .claude/skills/project-scan/\n",
+                        "  .claude/skills/project-scan/SKILL.md\n  .claude/skills/project-scan/Makefile.template\n")
+        self.edit_packs("pack copilot-hook requires core\n",
+                        "pack copilot-hook requires core\n  .claude/skills/project-scan/survey.sh\n")
+        self.assert_fails("kit/.claude/skills/project-scan/", "split")
+
+    def test_whitespace_in_a_kit_path_fails(self):
+        write(self.root, "kit/.claude/skills/tdd/my notes.md")
+        self.assert_fails("kit/.claude/skills/tdd/my notes.md", "whitespace")
+
+    def test_this_project_heading_only_in_the_agreement(self):
+        tester = "kit/.claude/agents/tester.md"
+        write(self.root, tester, self.read(tester) + "\n## This project\n\n- Extra rule.\n")
+        self.assert_fails(tester, "## This project")
+
+    def test_min_agd_is_required_and_a_version(self):
+        self.edit_packs("min-agd 0.1.0", "min-agd 0.1")
+        self.assert_fails("packs.txt:")
+        self.edit_packs("min-agd 0.1\n", "")
+        self.assert_fails("min-agd")
+
+    def test_malformed_line_fails(self):
+        self.edit_packs("pack core\n", "pack core\nflask-stuff\n")
+        self.assert_fails("packs.txt:")
 
 
 class SurveyTest(GitRepoCase):

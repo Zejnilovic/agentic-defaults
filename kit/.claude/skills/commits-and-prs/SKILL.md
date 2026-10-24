@@ -3,7 +3,7 @@ name: commits-and-prs
 description: How to split work into commits, write commit messages, and prepare and describe pull requests. Use when committing, writing a commit message, opening or describing a pull request, or splitting a large change.
 ---
 
-<!-- From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project". -->
+<!-- From agentic-defaults. Kit updates replace this file except a "## This project" section at the end, which belongs to the project. Edit nothing else. Rules for all work go in AGENTS.md "This project". -->
 
 # Commits and pull requests
 

@@ -3,7 +3,7 @@ name: spring
 description: Practices for Java backends built on Spring Boot - controllers and DTOs, services, Bean Validation, Spring Security, JPA and transactions, configuration, and JUnit tests. Use when adding or changing Spring endpoints, services, repositories or configuration, or reviewing such changes.
 ---
 
-<!-- From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project". -->
+<!-- From agentic-defaults. Kit updates replace this file except a "## This project" section at the end, which belongs to the project. Edit nothing else. Rules for all work go in AGENTS.md "This project". -->
 
 # Spring
 

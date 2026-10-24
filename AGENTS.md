@@ -11,11 +11,12 @@ This repo publishes reusable instructions, skills and agents. Everything under `
 
 ## Versions and releases
 
-- **Every change to `kit/` belongs to a version.** If the current version is already released (tagged), start a new one before or with the change: `bash scripts/bump.sh <version>`. It updates `VERSION`, the marker on the first line of `kit/AGENTS.md`, and adds an "(unreleased)" `CHANGELOG.md` heading with a TODO. Replace the TODO with what changed.
+- **Every change to `kit/` or `packs.txt` belongs to a version.** If the current version is already released (tagged), start a new one before or with the change: `bash scripts/bump.sh <version>`. It updates `VERSION`, the marker on the first line of `kit/AGENTS.md`, and adds an "(unreleased)" `CHANGELOG.md` heading with a TODO. Replace the TODO with what changed.
 - **Pick the number by impact on project copies:** patch for wording and fixes, minor for new agents, skills or rules, major for renames or removals that need manual changes in copies.
 - **Several changes can share one unreleased version.** Add a bullet to its `CHANGELOG.md` entry for each.
 - **To release:** commit and push everything to `master`, then run the **Release** workflow (Actions tab, or `gh workflow run release.yml`; `-f dry_run=true` pushes nothing). It runs the checks, moves the entry's text into a GitHub release, leaves a link under "## Released" in `CHANGELOG.md`, commits, and tags the commit `v<version>`. Don't release by hand, and don't add released notes back to `CHANGELOG.md`; the GitHub release holds them.
-- **`check.py` enforces this.** It fails when `kit/` differs from the tag of a released `VERSION`, when a tag has no link under "## Released", when `CHANGELOG.md` has an entry other than the unreleased `VERSION`, and while that entry has no bullets or still says TODO. Changes outside `kit/` (README, scripts, tests) don't need a new version.
+- **agd** (github.com/Zejnilovic/agd) installs the kit from this repo's tags and `packs.txt`. A kit release whose `packs.txt` raises `min-agd` waits for that agd release.
+- **`check.py` enforces this.** It fails when `kit/` or `packs.txt` differs from the tag of a released `VERSION`, when a tag has no link under "## Released", when `CHANGELOG.md` has an entry other than the unreleased `VERSION`, and while that entry has no bullets or still says TODO. Changes outside `kit/` and `packs.txt` (README, scripts, tests) don't need a new version.
 
 ## Compatibility: Claude Code and GitHub Copilot
 
@@ -23,7 +24,7 @@ This repo publishes reusable instructions, skills and agents. Everything under `
 - **Skills**: follow the Agent Skills format. One folder per skill containing `SKILL.md`; `name` is lowercase with hyphens and matches the folder; `description` says what the skill does and when to use it.
 - **Bodies**: describe actions ("search the code", "run the tests") rather than naming a product's tools.
 - **Instructions**: `kit/AGENTS.md` is the single source. `kit/CLAUDE.md` only imports it.
-- **Scripts in skills and `scripts/`**: read-only unless their purpose is to write (like `scripts/sync.sh --apply`). They must run with bash 3.2 (macOS) and Git Bash (Windows), need only git and POSIX tools, and detect optional tools with `command -v`. Cover their behavior in `tests/test_scripts.py`, and try a new script on at least two real projects of different kinds.
+- **Scripts in skills and `scripts/`**: read-only unless their purpose is to write (like `scripts/bump.sh`). They must run with bash 3.2 (macOS) and Git Bash (Windows), need only git and POSIX tools, and detect optional tools with `command -v`. Cover their behavior in `tests/test_scripts.py`, and try a new script on at least two real projects of different kinds.
 
 ## Write for everyday models
 
@@ -31,7 +32,7 @@ The kit must work well on fast, inexpensive models, not only the strongest ones.
 
 - Use numbered steps, an explicit output format and explicit stop conditions ("stop and report when ...").
 - Say what to skip as well as what to do. Prefer concrete limits to judgment calls: "at most 10 findings" rather than "keep it brief".
-- Keep files short. `kit/AGENTS.md` is loaded into every conversation (`check.py` enforces a 700-word budget), and skills listed in an agent's `skills` are loaded in full.
+- Keep files short. `kit/AGENTS.md` is loaded into every conversation (`check.py` enforces a 700-word budget on the part above "This project", which projects replace with their own), and skills listed in an agent's `skills` are loaded in full.
 - Write agent descriptions so they trigger only when the role is worth its cost. Claude Code delegates automatically based on the description, and a discovery run can cost hundreds of thousands of tokens.
 - Set `model: sonnet` only for roles that mainly reason (architect, reviewers) and `model: haiku` for roles that mainly read or execute (analyst, the developers, tester, documenter).
 - Framework developers come in pairs: a `<name>` skill with the framework's practices and a thin `<name>-developer` agent that preloads `implementation` and `<name>`, plus a short "essentials" fallback for tools that don't preload skills. Change shared developer behavior in the `implementation` skill, not in each agent. Framework skills keep the same sections (follow the project first, structure, the framework's own concerns, `## Tests`, `## Stop and report before`); `check.py` enforces the pairing and the last two sections.
@@ -47,4 +48,4 @@ The kit must work well on fast, inexpensive models, not only the strongest ones.
 - Keep `kit/AGENTS.md` short. Move procedures into skills.
 - Agents are roles (who does the work); skills are practices (how it's done). An agent names the skills it uses and keeps a one-line version of their essential rule, so it still behaves sensibly if a skill wasn't copied. Don't paste a skill's content into an agent.
 - Roles don't delegate to other agents. Each one returns its result to whoever called it.
-- When adding, renaming or removing anything in `kit/`, update the tables in `README.md`.
+- When adding, renaming or removing anything in `kit/`, update the tables in `README.md`, including Packs, and its pack in `packs.txt`.

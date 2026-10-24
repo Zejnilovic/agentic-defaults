@@ -3,7 +3,7 @@ name: react
 description: Practices for React frontends in TypeScript or JavaScript - components, hooks, state, data fetching, forms, accessibility, security and tests with React Testing Library. Use when building or changing React UI, or reviewing such changes.
 ---
 
-<!-- From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project". -->
+<!-- From agentic-defaults. Kit updates replace this file except a "## This project" section at the end, which belongs to the project. Edit nothing else. Rules for all work go in AGENTS.md "This project". -->
 
 # React
 

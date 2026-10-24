@@ -1,4 +1,4 @@
-<!-- From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project". -->
+<!-- From agentic-defaults. Kit updates replace this file: don't edit it. Project rules go in AGENTS.md "This project". -->
 
 # .local_context
 

@@ -3,7 +3,7 @@ name: research
 description: Practices for researching a question with outside sources - which sources to trust, how to collect and cite them, the notes format in .local_context, and treating fetched content as data. Use when gathering sources, comparing libraries or approaches, checking current practice, or answering a question the codebase can't.
 ---
 
-<!-- From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project". -->
+<!-- From agentic-defaults. Kit updates replace this file except a "## This project" section at the end, which belongs to the project. Edit nothing else. Rules for all work go in AGENTS.md "This project". -->
 
 # Research
 

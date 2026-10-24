@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Consistency checks for the kit. Run before committing: python3 scripts/check.py
 
-Checks frontmatter, skill references, links, README coverage, version markers, the
+Checks frontmatter, skill references, links, README coverage, version markers, packs, the
 always-on word budget, shell script syntax, and (when mmdc is installed) Mermaid rendering.
 Exits 1 if any problem is found.
 """
@@ -70,6 +70,7 @@ for path in sorted(SKILLS_DIR.glob("*/SKILL.md")):
         problems.append(f"{rel(path)}: description missing or longer than 1024 characters")
     skills[path.parent.name] = text
 
+preloads = {}
 for path in sorted(AGENTS_DIR.glob("*.md")):
     fields, text = frontmatter(path)
     if fields.get("name") != path.stem:
@@ -82,6 +83,7 @@ for path in sorted(AGENTS_DIR.glob("*.md")):
     if "model" in fields and fields["model"] not in MODELS:
         problems.append(f"{rel(path)}: model '{fields['model']}' is not one of {sorted(MODELS)}")
     preload = fields.get("skills") if isinstance(fields.get("skills"), list) else []
+    preloads[path.stem] = preload
     for skill in set(preload) | skill_mentions(text):
         if skill not in skills:
             problems.append(f"{rel(path)}: refers to missing skill '{skill}'")
@@ -118,7 +120,7 @@ if (KIT / "CLAUDE.md").read_text() != "@AGENTS.md\n":
 version = (REPO / "VERSION").read_text().strip()
 agreement = (KIT / "AGENTS.md").read_text()
 if "\n## This project" not in agreement:
-    problems.append("kit/AGENTS.md has no '## This project' section (scripts/sync.sh relies on it)")
+    problems.append("kit/AGENTS.md has no '## This project' section (agd keeps everything from it down as the project's)")
 marker = re.search(r"agentic-defaults (\d+\.\d+\.\d+)", agreement)
 if not marker or marker.group(1) != version:
     problems.append(f"kit/AGENTS.md version marker doesn't match VERSION {version}")
@@ -148,7 +150,7 @@ def check_unreleased_entry():
         problems.append(f"CHANGELOG.md's {version} entry still has a TODO: describe the change")
 
 
-# Release rule: once VERSION is tagged as released, any change to kit/ needs a new version.
+# Release rule: once VERSION is tagged as released, any change to kit/ or packs.txt needs a new version.
 tag = f"v{version}"
 if git("rev-parse", "--git-dir").returncode != 0:
     release_note = "release rule skipped (not a git repository)"
@@ -159,11 +161,12 @@ elif git("rev-parse", "-q", "--verify", f"refs/tags/{tag}").returncode == 0:
     if any(v == version for v, _, _ in entries):
         problems.append(f"CHANGELOG.md: {version} is released as {tag}, so its entry belongs in the GitHub release, "
                         f"not under '## {version}'")
-    changed = sorted(set(git("diff", "--name-only", tag, "--", "kit").stdout.splitlines())
-                     | set(git("ls-files", "--others", "--exclude-standard", "--", "kit").stdout.splitlines()))
+    released = ("kit", "packs.txt")
+    changed = sorted(set(git("diff", "--name-only", tag, "--", *released).stdout.splitlines())
+                     | set(git("ls-files", "--others", "--exclude-standard", "--", *released).stdout.splitlines()))
     if changed:
         listed = ", ".join(changed[:3]) + (f" and {len(changed) - 3} more" if len(changed) > 3 else "")
-        problems.append(f"kit/ changed since {tag} was released ({listed}). Start a new version with "
+        problems.append(f"kit/ or packs.txt changed since {tag} was released ({listed}). Start a new version with "
                         f"'bash scripts/bump.sh <version>': patch for wording and fixes, minor for new agents, "
                         f"skills or rules, major for renames or removals")
 else:
@@ -177,9 +180,105 @@ if git("rev-parse", "--git-dir").returncode == 0:
             problems.append(f"CHANGELOG.md: {released[1:]} is released as {released}, so '## Released' needs "
                             f"'- [{released[1:]}](https://github.com/<owner>/<repo>/releases/tag/{released}) (YYYY-MM-DD)'")
 
-words = len(agreement.split())
+# packs.txt groups kit files into the packs agd installs. agd copies whole packs, keeps everything
+# from "## This project" down as the project's, and splits packs.txt and its lock file on spaces.
+if git("rev-parse", "--git-dir").returncode == 0:
+    listed = git("ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", "kit").stdout.split("\0")
+    kit_files = sorted({p[len("kit/"):] for p in listed if p and (REPO / p).is_file()})
+else:
+    kit_files = sorted(p.relative_to(KIT).as_posix() for p in KIT.rglob("*") if p.is_file() and p.name != ".DS_Store")
+
+packs_file = REPO / "packs.txt"
+if not packs_file.exists():
+    problems.append("packs.txt is missing: it lists the packs agd installs")
+pack_paths, requires, min_agd, current = {}, {}, None, None
+for number, line in enumerate(packs_file.read_text().splitlines() if packs_file.exists() else [], 1):
+    words = line.split()
+    if not words or words[0].startswith("#"):
+        continue
+    if line[0].isspace():
+        if current and len(words) == 1:
+            pack_paths[current].append(words[0])
+            continue
+    elif words[0] == "min-agd" and len(words) == 2 and re.fullmatch(r"\d+\.\d+\.\d+", words[1]):
+        min_agd = words[1]
+        continue
+    elif (words[0] == "pack" and (len(words) == 2 or (len(words) > 3 and words[2] == "requires"))
+          and re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", words[1]) and words[1] not in pack_paths):
+        current = words[1]
+        pack_paths[current], requires[current] = [], words[3:]
+        continue
+    problems.append(f"packs.txt:{number}: expected 'min-agd <version>', 'pack <new-name> [requires <pack> ...]' "
+                    f"or an indented kit path without spaces")
+
+
+if min_agd is None:
+    problems.append("packs.txt needs a 'min-agd <version>' line: the oldest agd (github.com/Zejnilovic/agd) "
+                    "that can install this kit")
+
+owners = {path: [] for path in kit_files}
+for pack, paths in pack_paths.items():
+    for entry in paths:
+        matched = [path for path in kit_files if path == entry or (entry.endswith("/") and path.startswith(entry))]
+        if not matched:
+            problems.append(f"packs.txt: '{entry}' in pack '{pack}' matches no file in kit/")
+        for path in matched:
+            owners[path].append(pack)
+for path, packs in owners.items():
+    if not packs:
+        problems.append(f"kit/{path} isn't in any pack: add it to packs.txt")
+    elif len(packs) > 1:
+        problems.append(f"kit/{path} is listed more than once in packs.txt ({', '.join(packs)}): keep it in one pack")
+    if re.search(r"\s", path):
+        problems.append(f"kit/{path}: kit paths can't contain whitespace (agd splits packs.txt and its lock on spaces)")
+    if path != "AGENTS.md" and re.search(r"^## This project[ \t]*$", (KIT / path).read_text(errors="replace"), re.M):
+        problems.append(f"kit/{path} has a '## This project' heading. Only kit/AGENTS.md may: in projects, "
+                        f"agd keeps everything from that heading down as the project's")
+
+
+def packs_of(folder):
+    return {pack for path in kit_files if path.startswith(folder) for pack in owners[path]}
+
+
+def required(pack):
+    """Every pack that pack needs, directly or through others."""
+    found, todo = set(), list(requires.get(pack, []))
+    while todo:
+        other = todo.pop()
+        if other not in found:
+            found.add(other)
+            todo.extend(requires.get(other, []))
+    return found
+
+
+for pack, needed in requires.items():
+    for other in needed:
+        if other not in requires:
+            problems.append(f"packs.txt: pack '{pack}' requires '{other}', which isn't a pack")
+    if pack in required(pack):
+        problems.append(f"packs.txt: pack '{pack}' requires itself through a cycle")
+
+for skill in skills:
+    split = sorted(packs_of(f".claude/skills/{skill}/"))
+    if len(split) > 1:
+        problems.append(f"kit/.claude/skills/{skill}/ is split across packs ({', '.join(split)}): "
+                        f"a skill folder belongs to one pack")
+
+for agent, preload in preloads.items():
+    path = f".claude/agents/{agent}.md"
+    if len(owners.get(path, [])) != 1:
+        continue
+    pack = owners[path][0]
+    for skill in preload:
+        outside = sorted(packs_of(f".claude/skills/{skill}/") - {pack} - required(pack))
+        if outside:
+            problems.append(f"kit/{path} preloads the '{skill}' skill from pack '{outside[0]}', "
+                            f"which pack '{pack}' doesn't require")
+
+# Only the kit's part counts: projects replace everything from "## This project" down with their own.
+words = len(agreement.split("\n## This project", 1)[0].split())
 if words > AGREEMENT_WORD_BUDGET:
-    problems.append(f"kit/AGENTS.md has {words} words, over the {AGREEMENT_WORD_BUDGET}-word budget")
+    problems.append(f"kit/AGENTS.md has {words} words above 'This project', over the {AGREEMENT_WORD_BUDGET}-word budget")
 
 # Kit-owned files say so, so agents in a project know not to edit them. Templates are exempt:
 # agents copy them into new project files.

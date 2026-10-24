@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project".
+# From agentic-defaults. Kit updates replace this file: don't edit it. Project rules go in AGENTS.md "This project".
 # Read-only survey of a project for AI discovery. Prints a compact Markdown overview.
 # Needs only git and POSIX tools; uses scc or tokei for language stats when installed.
 # Works with bash 3.2 (macOS) and Git Bash (Windows).

@@ -1,0 +1,50 @@
+# Packs: the parts of kit/ that agd installs, each with the packs it needs.
+# Each kit file is in exactly one pack. A path ending in / means every file under that folder.
+# Paths are relative to kit/. scripts/check.py checks this file.
+
+min-agd 0.1.0
+
+pack core
+  AGENTS.md
+  CLAUDE.md
+  .local_context/
+  .claude/agents/analyst.md
+  .claude/agents/architect.md
+  .claude/agents/developer.md
+  .claude/agents/documenter.md
+  .claude/agents/reviewer.md
+  .claude/agents/security-reviewer.md
+  .claude/agents/tester.md
+  .claude/skills/commits-and-prs/
+  .claude/skills/context-md/
+  .claude/skills/debugging/
+  .claude/skills/diagrams/
+  .claude/skills/implementation/
+  .claude/skills/project-profile/
+  .claude/skills/project-scan/
+  .claude/skills/task-plans/
+  .claude/skills/tdd/
+
+pack research requires core
+  .claude/agents/research-collector.md
+  .claude/agents/researcher.md
+  .claude/skills/research/
+
+pack flask requires core
+  .claude/agents/flask-developer.md
+  .claude/skills/flask/
+
+pack spring requires core
+  .claude/agents/spring-developer.md
+  .claude/skills/spring/
+
+pack react requires core
+  .claude/agents/react-developer.md
+  .claude/skills/react/
+
+pack relational-database requires core
+  .claude/agents/relational-database-developer.md
+  .claude/skills/relational-database/
+
+pack copilot-hook requires core
+  .github/hooks/context-check.json

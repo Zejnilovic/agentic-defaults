@@ -2,13 +2,13 @@
 
 Sensible defaults for agentic coding: test-first, reasonable coverage, and context that stays current.
 
-Generic instructions, skills and agents for AI coding assistants, built around practical delivery and modest model budgets. Everything in [`kit/`](kit/) works in both **Claude Code** and **GitHub Copilot** (VS Code). Copy what you need into a project or your user folder.
+Generic instructions, skills and agents for AI coding assistants, built around practical delivery and modest model budgets. Everything in [`kit/`](kit/) works in both **Claude Code** and **GitHub Copilot** (VS Code). Install it in a project with [agd](https://github.com/Zejnilovic/agd), or copy what you need.
 
 **Why it works this way:** [Working with coding agents](docs/methodology.md) explains the method behind the kit. It covers the principles, rules of thumb, anti-patterns and nine hands-on exercises, and is written to stay true as tools and models change.
 
 ## Quick start
 
-1. **Copy** the contents of `kit/` into your project's root, or run `bash scripts/sync.sh <project-dir> --apply` from a clone of this repo.
+1. **Install** [agd](https://zejnilovic.github.io/agd) with `brew install zejnilovic/tap/agd`, or without Homebrew with `curl -fsSL https://raw.githubusercontent.com/Zejnilovic/agd/main/install.sh | bash`. Then run `agd init` in your project's root and commit the new files with `.agd.lock`. That installs every [pack](#packs); `agd init --with flask,react` installs only those and the packs they require, so add `copilot-hook` to the list if you use Copilot. Without agd, copy the contents of `kit/` into the project's root.
 2. **Scan** the project: ask your assistant to "use the analyst to scan this project". It writes the root `CONTEXT.md`, proposes a [project profile](#project-profile), fills in the [standard commands](#standard-commands) in `AGENTS.md`, and proposes any that are missing. Review and confirm them.
 3. **Work.** For small changes, just chat; the working agreement applies. For bigger ones, give it the ticket number or put your notes in `.local_context/<task>/`, and follow [How work flows](#how-work-flows).
 
@@ -131,7 +131,7 @@ The kit is plain Markdown, shell scripts and JSON in the formats both tools read
 
 Copilot support follows the VS Code and GitHub documentation. Everything except the Copilot hook has been used in a project; check the hook in your first Copilot session.
 
-## Where to copy
+## Where the files go
 
 | Kind | Claude Code | GitHub Copilot (VS Code) |
 |---|---|---|
@@ -144,20 +144,31 @@ Copilot support follows the VS Code and GitHub documentation. Everything except 
 | Local notes | `.local_context/` at the project root | Same |
 | End-of-turn context check | A Stop hook you add to `.claude/settings.json` ([snippet](#keeping-contextmd-current)) | `.github/hooks/context-check.json`, shipped with the kit |
 
-Copying the whole `kit/` folder into a project root gives both tools everything. Copy each skill as a whole folder, since it may contain a template or script. Agents refer to skills by name, so copy the skills an agent lists along with it.
+agd installs into the per-project paths, which give both tools everything. It doesn't install into your home folder yet: copy personal files by hand. When copying, copy each skill as a whole folder, since it may contain a template or script, and copy the skills an agent lists along with it.
 
-Keep only the framework pairs your project uses: a Flask and React project deletes `spring-developer.md` and `skills/spring/`. Fewer agents mean a shorter agent list in Copilot and less guessing when Claude Code picks one. So that sync doesn't bring them back, list them in `.agentic-defaults-ignore` at the project root, and commit it:
+### Packs
+
+agd installs the kit in packs, so a project gets only the frameworks it uses. Fewer agents mean a shorter agent list in Copilot and less guessing when Claude Code picks one.
+
+| Pack | Contents | Requires |
+|---|---|---|
+| `core` | The working agreement, `.local_context/`, the analyst, architect, developer, tester, reviewer, security reviewer and documenter, and the skills they use | |
+| `research` | The research collector and the researcher, and the `research` skill | `core` |
+| `flask`, `spring`, `react`, `relational-database` | Each framework's developer and skill | `core` |
+| `copilot-hook` | The end-of-turn context check for Copilot | `core` |
+
+`agd add spring` and `agd remove spring` change a project's packs later; removing keeps the files you changed. To keep single files out, list them in `.agd-ignore` at the project root, and commit it:
 
 ```text
-# No Spring backend in this project
-.claude/agents/spring-developer.md
-.claude/skills/spring/*
+# We have our own documenter
+.claude/agents/documenter.md
 ```
 
-After copying, run a project scan to fill in the **This project** section of `AGENTS.md`, or fill it in by hand.
+After installing, run a project scan to fill in the **This project** section of `AGENTS.md`, or fill it in by hand.
 
 ### Projects that already have AI files
 
+- **A copy of this kit made by hand or with the old `scripts/sync.sh`**: run `agd adopt` in the project. It reads the version from the first line of `AGENTS.md` and records the kit files in `.agd.lock` without changing any; `agd status` then shows what differs, and `agd update` brings the project up to date.
 - **`CLAUDE.md` or `.github/copilot-instructions.md` with content**: move the project-specific parts (commands, done checks, conventions) into the **This project** section of `AGENTS.md`, then replace `CLAUDE.md` with the one-line import. Both tools then read the same rules.
 - **An existing `CONTEXT.md` or architecture notes**: the project scan keeps their stable facts, splits them by area and drops volatile parts such as test counts and issue lists.
 - **Decision records** such as `docs/adr/`: the kit uses them instead of repeating decisions in `CONTEXT.md`.
@@ -182,7 +193,7 @@ The working agreement defines done as "`make check` passes". The project scan re
 
 ## Project profile
 
-Not every project needs every practice. An internal tool for ten people shouldn't be built like a bank's payment system. Each project describes itself in the **Profile** part of "This project" in `AGENTS.md`. That section belongs to the project, and sync never changes it:
+Not every project needs every practice. An internal tool for ten people shouldn't be built like a bank's payment system. Each project describes itself in the **Profile** part of "This project" in `AGENTS.md`. That section belongs to the project, and kit updates never change it:
 
 ```markdown
 ### Profile
@@ -206,25 +217,45 @@ For example, an internal time-tracking tool in production, run by a small team, 
 
 ## Kit files and project files
 
-Kit files are replaced when the kit updates, so local edits to them are lost. Each one says so at the top with a "From agentic-defaults" marker, and in `AGENTS.md` everything above "This project" belongs to the kit. Agents are told never to edit these, and never to tell you to. When you ask for something specific to your project, they put it here instead:
+Kit files are replaced when the kit updates. Each one says so at the top with a "From agentic-defaults" marker, and in `AGENTS.md` everything above "This project" belongs to the kit. Three parts of kit files belong to the project, and updates keep them: an agent's `model:` and `tools:` lines, and a `## This project` section at the end of an agent or skill. Agents are told never to edit anything else in kit files, and never to tell you to. When you ask for something specific to your project, they put it here instead:
 
 | You ask for | It goes in |
 |---|---|
 | A rule or command for this project | "This project" in `AGENTS.md`, which every agent reads |
+| A different model for an agent | That agent's `model:` line |
+| Limits on what an agent may use | A `tools:` line in that agent ([Customizing](#customizing)) |
+| Extra instructions for one agent or skill | A `## This project` section at the end of that file |
 | A fact or convention about part of the code | That area's `CONTEXT.md` |
-| A project-only role or practice | A new agent or skill file with its own name; sync never touches it |
-| Different behavior from a kit file | A copy under a new name, with the original listed in `.agentic-defaults-ignore` |
+| A project-only role or practice | A new agent or skill file with its own name; kit updates never touch it |
+| Different behavior from a kit file | A copy under a new name, with the original listed in `.agd-ignore` |
 | A change every project would benefit from | A suggestion for this repository |
 
-## Updating a project's copy
+## Updating a project
 
-Hand-copied files fall behind as the kit improves. From a clone of this repo:
+`agd status` shows what an update would do, and `agd update` does it:
 
 ```bash
-bash scripts/sync.sh ~/path/to/project
+agd status
 ```
 
-It lists which kit files are missing, differ or are the same in the project. Add `--diff` to see the changes, and `--apply` to update. `--apply` replaces only the part of `AGENTS.md` above **This project**, never overwrites a `CLAUDE.md` that has its own content, skips paths listed in `.agentic-defaults-ignore`, and leaves files that aren't part of the kit alone. With `--existing-only` it adds no new agents or skills, but still completes the skill folders the project has. It does overwrite local tweaks to kit files, such as a changed model, so review the result with `git diff`. The first line of a project's `AGENTS.md` shows which kit version it came from. The [releases](https://github.com/Zejnilovic/agentic-defaults/releases) list what changed since, with manual steps where a copy needs them, and [CHANGELOG.md](CHANGELOG.md) has what's coming next.
+```bash
+agd update
+```
+
+- Kit files you haven't changed get the new version. Your `model:` and `tools:` lines and `## This project` sections stay.
+- A kit file you changed anywhere else is left alone. `agd status` shows it as edited, and as having a newer version when the kit changed it too. `agd diff <path>` shows both sides, `agd merge <path>` merges the kit's changes into yours, and `agd reset <path>` takes the kit's version.
+- Files that aren't the kit's are never touched.
+- `agd update --to 0.4.0` moves to a given release, and `agd status --check` exits 1 when an update is due, for CI.
+
+The [releases](https://github.com/Zejnilovic/agentic-defaults/releases) list what changed, with manual steps where a project needs them, and [CHANGELOG.md](CHANGELOG.md) has what's coming next. [agd's documentation](https://zejnilovic.github.io/agd) covers the rest of agd.
+
+### Combining with your own
+
+- **Your own agents and skills**: new files with their own names. agd never touches files it didn't install.
+- **Your team's setup on top of this kit**: publish it as an agd source ([how](https://github.com/Zejnilovic/agd/blob/main/docs/sources.md)) and add it with `agd init your-org/your-setup`. Its packs can require this kit's, for example `requires agentic-defaults:core`.
+- **Your team's version of a kit file**: when both ship the same path, agd stops and asks you to choose with a line in `.agd-ignore`: `agentic-defaults:<path>` uses your team's copy, and `<your-source>:<path>` keeps this kit's.
+
+`.agd-ignore` replaces `.agentic-defaults-ignore` from before 0.4.0; agd still reads the old file.
 
 ## Keeping CONTEXT.md current
 
@@ -237,8 +268,8 @@ bash .claude/skills/context-md/check.sh
 Agents run it themselves. You can also run it automatically:
 
 - **At the end of each agent turn**, in both tools. When code changed and a `CONTEXT.md` didn't, the agent gets one reminder and either updates the file or says why none is needed. The same finding is never raised twice. The script's `--hook` mode prints `{"decision": "block", "reason": ...}`, which Claude Code's `Stop` hook and Copilot's `agentStop` hook both read as "keep working with this instruction".
-  - **GitHub Copilot** (VS Code, CLI and cloud agent): the kit ships [`.github/hooks/context-check.json`](kit/.github/hooks/context-check.json), so it is on as soon as the kit is copied. Copilot hooks are in preview in VS Code, an organization can restrict them, and the cloud agent only reads hooks from the default branch. The file follows GitHub's documentation but hasn't been tested in a real Copilot session yet. To turn it off, delete it and list it in `.agentic-defaults-ignore`.
-  - **Claude Code**: add a Stop hook to `.claude/settings.json` (shared with the team) or `.claude/settings.local.json` (just you), merged with what's already there. The kit doesn't ship this file, because syncing it would overwrite a project's own settings.
+  - **GitHub Copilot** (VS Code, CLI and cloud agent): the kit ships [`.github/hooks/context-check.json`](kit/.github/hooks/context-check.json), so it is on as soon as the kit is installed. Copilot hooks are in preview in VS Code, an organization can restrict them, and the cloud agent only reads hooks from the default branch. The file follows GitHub's documentation but hasn't been tested in a real Copilot session yet. To turn it off, run `agd remove copilot-hook`.
+  - **Claude Code**: add a Stop hook to `.claude/settings.json` (shared with the team) or `.claude/settings.local.json` (just you), merged with what's already there. The kit doesn't ship this file, because updating it would overwrite a project's own settings.
 
   ```json
   {
@@ -283,7 +314,7 @@ npm install -g @mermaid-js/mermaid-cli
 
 ## Customizing
 
-- **Restrictions are instructions, not enforcement.** "Edits tests only" is written in the agent's text. To enforce it, add a `tools` list to the agent, for example `tools: Read, Grep, Glob, Bash` for a read-only reviewer. Claude Code uses these names directly, and VS Code maps them for files in `.claude/agents`. Check that the agent can still do its job afterwards.
+- **Restrictions are instructions, not enforcement.** "Edits tests only" is written in the agent's text. To enforce it, add a `tools` list to the agent, for example `tools: Read, Grep, Glob, Bash` for a read-only reviewer. Claude Code uses these names directly, and VS Code maps them for files in `.claude/agents`. Check that the agent can still do its job afterwards. Kit updates keep the line, as they keep `model:`.
 - **`skills` in an agent's frontmatter** preloads those skills in Claude Code. Copilot ignores the field and loads skills when they're relevant.
 - **Another framework** (FastAPI, Django, Angular, Vue and so on) is a pair: a `<framework>` skill and a `<framework>-developer` agent. Copy the closest existing pair, keep the skill's sections (follow the project first, structure, the framework's own concerns, tests, stop and report before), and keep `implementation` in the agent's `skills` list so it follows the shared rules. Project-specific conventions go in the area's `CONTEXT.md`, not in the skill.
 
@@ -299,7 +330,7 @@ python3 scripts/check.py
 python3 -m unittest discover -s tests
 ```
 
-`check.py` verifies frontmatter, skill references, links, this README's tables, version markers, the word budget of the working agreement, script syntax and, when the Mermaid CLI is installed, that diagrams render. The tests cover the scripts' behavior. CI runs both on Linux and macOS.
+`check.py` verifies frontmatter, skill references, links, this README's tables, version markers, the packs in `packs.txt`, the word budget of the working agreement, script syntax and, when the Mermaid CLI is installed, that diagrams render. The tests cover the scripts' behavior. CI runs both on Linux and macOS.
 
 Every change to `kit/` after a release needs a new version, and `check.py` fails until there is one. Start it with:
 
@@ -311,7 +342,7 @@ Then describe the change in `CHANGELOG.md`. To release, push to `master` and run
 
 ## Credits
 
-Several delivery safeguards are adapted from [GSD Core](https://github.com/open-gsd/gsd-core) (MIT): goal checks in review, the developer's rules for unplanned work, the ban on watered-down requirements, and dependency safety. GSD is a much larger framework with its own installer and phase loop; this kit takes a few of its ideas in a lighter, copy-by-hand form.
+Several delivery safeguards are adapted from [GSD Core](https://github.com/open-gsd/gsd-core) (MIT): goal checks in review, the developer's rules for unplanned work, the ban on watered-down requirements, and dependency safety. GSD is a much larger framework with its own installer and phase loop; this kit takes a few of its ideas in a lighter form.
 
 ## License
 
