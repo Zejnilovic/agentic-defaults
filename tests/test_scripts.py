@@ -218,13 +218,16 @@ class SyncTest(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(self.project, ".claude/agents/developer.md")))
 
 
+RELEASED_1_0_0 = "## Released\n\n- [1.0.0](https://github.com/example/kit/releases/tag/v1.0.0) (2026-01-01)\n"
+
+
 class VersionTest(GitRepoCase):
-    """check.py's release rule and scripts/bump.sh, on a copy of this repo released as 1.0.0."""
+    """check.py's release rule, scripts/bump.sh and scripts/release.py, on a copy of this repo released as 1.0.0."""
 
     def setUp(self):
         super().setUp()
         shutil.copytree(REPO, self.root, dirs_exist_ok=True, ignore=shutil.ignore_patterns(".git", "__pycache__"))
-        self.set_release("1.0.0", "## 1.0.0 (2026-01-01)\n\n- First release.\n")
+        self.set_release("1.0.0", RELEASED_1_0_0)
 
     def set_release(self, version, entry):
         write(self.root, "VERSION", version + "\n")
@@ -243,6 +246,13 @@ class VersionTest(GitRepoCase):
 
     def bump(self, version):
         return run(["bash", "scripts/bump.sh", version], self.root)
+
+    def release(self):
+        return run(["python3", "scripts/release.py", "--repo", "example/kit", "--date", "2026-02-02",
+                    "--notes", "notes.md"], self.root)
+
+    def describe(self, text):
+        write(self.root, "CHANGELOG.md", self.read("CHANGELOG.md").replace("TODO: describe the change", text))
 
     def read(self, rel):
         return pathlib.Path(self.root, rel).read_text()
@@ -263,7 +273,7 @@ class VersionTest(GitRepoCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn("TODO", result.stdout)
 
-        write(self.root, "CHANGELOG.md", self.read("CHANGELOG.md").replace("TODO: describe the change", "New TDD rule."))
+        self.describe("New TDD rule.")
         result = self.check()
         self.assertEqual(result.returncode, 0, result.stdout)
 
@@ -276,11 +286,59 @@ class VersionTest(GitRepoCase):
         result = self.check()
         self.assertEqual(result.returncode, 0, result.stdout)
 
-    def test_released_version_needs_a_dated_heading(self):
-        self.set_release("1.0.0", "## 1.0.0 (unreleased)\n\n- First release.\n")
+    def test_released_version_cannot_keep_an_unreleased_entry(self):
+        self.set_release("1.0.0", "## 1.0.0 (unreleased)\n\n- First release.\n\n" + RELEASED_1_0_0)
         result = self.check()
         self.assertEqual(result.returncode, 1)
-        self.assertIn("date", result.stdout)
+        self.assertIn("1.0.0", result.stdout)
+
+    def test_every_tag_is_listed_as_released(self):
+        self.set_release("1.0.0", "## Released\n")
+        result = self.check()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("v1.0.0", result.stdout)
+
+    def test_unreleased_version_needs_its_entry(self):
+        write(self.root, "VERSION", "1.1.0\n")
+        write(self.root, "kit/AGENTS.md", self.read("kit/AGENTS.md").replace("agentic-defaults 1.0.0", "agentic-defaults 1.1.0", 1))
+        result = self.check()
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("1.1.0 (unreleased)", result.stdout)
+
+    def test_release_moves_notes_out_and_links_the_release(self):
+        self.assertEqual(self.bump("1.1.0").returncode, 0)
+        self.describe("New rule, see [the methodology](docs/methodology.md#principles).\n\nManual steps:\n\n- Do this")
+        result = self.release()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), "1.1.0")
+
+        notes = self.read("notes.md")
+        self.assertTrue(notes.startswith("- New rule"), notes)
+        self.assertIn("(https://github.com/example/kit/blob/v1.1.0/docs/methodology.md#principles)", notes)
+        self.assertIn("- Do this", notes)
+
+        changelog = self.read("CHANGELOG.md")
+        self.assertNotIn("## 1.1.0", changelog)
+        self.assertNotIn("New rule", changelog)
+        link = "- [1.1.0](https://github.com/example/kit/releases/tag/v1.1.0) (2026-02-02)"
+        self.assertLess(changelog.index(link), changelog.index("- [1.0.0]"))
+
+        os.remove(os.path.join(self.root, "notes.md"))
+        self.commit("release 1.1.0")
+        run(["git", "tag", "v1.1.0"], self.root)
+        result = self.check()
+        self.assertEqual(result.returncode, 0, result.stdout)
+
+    def test_release_refuses_without_a_described_unreleased_version(self):
+        before = self.read("CHANGELOG.md")
+        self.assertNotEqual(self.release().returncode, 0)
+        self.assertEqual(self.bump("1.1.0").returncode, 0)
+        after_bump = self.read("CHANGELOG.md")
+        result = self.release()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("TODO", result.stderr)
+        self.assertEqual(self.read("CHANGELOG.md"), after_bump)
+        self.assertNotEqual(before, after_bump)
 
     def test_bump_updates_version_marker_and_changelog(self):
         result = self.bump("1.1.0")
@@ -288,7 +346,7 @@ class VersionTest(GitRepoCase):
         self.assertEqual(self.read("VERSION"), "1.1.0\n")
         self.assertIn("agentic-defaults 1.1.0", self.read("kit/AGENTS.md").splitlines()[0])
         changelog = self.read("CHANGELOG.md")
-        self.assertLess(changelog.index("## 1.1.0 (unreleased)"), changelog.index("## 1.0.0 (2026-01-01)"))
+        self.assertLess(changelog.index("## 1.1.0 (unreleased)"), changelog.index("## Released"))
 
     def test_bump_rejects_malformed_or_not_greater_versions(self):
         for bad in ["1.0", "v1.0.1", "1.0.0", "0.9.9"]:
@@ -306,6 +364,17 @@ class SurveyTest(GitRepoCase):
         self.assertIn("## Contracts", result.stdout)
         self.assertIn("api/openapi.yaml", result.stdout)
         self.assertIn("proto/orders.proto", result.stdout)
+
+    def test_counts_recent_contributors_without_naming_them(self):
+        write(self.root, "a.py", "x\n")
+        self.commit("first")
+        write(self.root, "b.py", "y\n")
+        run(["git", "add", "-A"], self.root)
+        run(["git", "-c", "user.name=Other", "-c", "user.email=other@example.com", "commit", "-q",
+             "--author=Other <other@example.com>", "-m", "second"], self.root)
+        result = run(["bash", str(SURVEY), self.root], self.root)
+        self.assertIn("- Contributors, last 12 months: 2", result.stdout)
+        self.assertNotIn("other@example.com", result.stdout)
 
     def test_reports_missing_standard_commands(self):
         write(self.root, "Makefile", "test:\n\tpytest\nlint:\n\truff .\n")

@@ -63,6 +63,7 @@ Instructions say how to work. Knowledge says what this project is. Keep them apa
 
 - **Never put project facts in instructions.** Names of services, tables and commands, conventions and decisions all go in the project's context files. An instruction says "read the nearest context file and follow its conventions"; the context file says what they are.
 - **A new project gets new context, not new instructions.** Copy the same instructions, then write the project's context. A new framework means adding or swapping one framework layer, never editing the method.
+- **Never edit shared instructions inside a project.** A local edit is lost at the next update, and the copies drift apart. Mark shared files as shared, so agents know too. Project rules go in the project's own files; a change that would help every project goes back to the shared source.
 - **Give every project the same front door.** Use a small set of standard commands, such as `make setup`, `make build`, `make test`, `make lint` and `make run`, wrapping whatever each project really uses underneath. Then one instruction, "run `make test`", works in every project, and people get the same benefit. Make is decades old and available on nearly every developer machine. Any task runner works, as long as every project uses the same command names.
 
 ## 3. Context is a budget
@@ -75,15 +76,34 @@ Treat what the agent reads and writes like money: spend it where it pays off.
 - **Give separable work a fresh context.** Exploration, review and independent steps can run in a separate session that starts clean and returns a short result. The main conversation stays small, and the noisy work doesn't pile up in it.
 - **Hand work over through files, not chat.** A fresh context can't see your conversation. Point it at the plan file and the step number instead of pasting the plan.
 
-## 4. Size the process to the task
+## 4. Size the process and the engineering
 
-Process has a cost. Spend it only when it buys something.
+Process and engineering practices have a cost. Spend them only when they buy something, for this task and for this project.
+
+### Size the process to the task
 
 - **A small, local change:** just ask. The working agreement is enough.
 - **Several steps or sessions:** write a plan file first, so the work survives a fresh session.
 - **Several parts of the system, or a design decision:** separate the roles. Discover, design, implement, verify.
 
-Whatever the size:
+### Size the engineering to the project
+
+An internal tool for ten people shouldn't be built like a bank's payment system, and agents left alone tend to reach for the heavyweight version of every practice. Write down what kind of project this is, in a few dimensions that each decide something different:
+
+| Dimension | For example | Decides |
+|---|---|---|
+| Stage | prototype, early, production, mature | How much rigor: test depth, migration safety, compatibility |
+| Audience | personal, internal, customer, public | Security depth, versioned contracts, accessibility, abuse limits |
+| Team | solo, one team, several teams | Formality: decision records, contracts between teams |
+| What it handles | money, personal data, regulated data, safety | Risk at any size: security reviews, audit trails, backups |
+
+- **Cheap correctness and safety always apply.** Validate input, check access, never build queries from strings, test behavior, and stop before losing data, whatever the profile.
+- **Costly practices apply when the profile calls for them.** Contract tests, zero-downtime migrations, feature switches, decision records and formal reviews earn their cost at some profiles and are waste at others. Mark them with the profile that needs them, so an agent can check rather than guess.
+- **A practice is worth it when the failure it prevents is likely and expensive here.** Skip one whose cost outweighs what it prevents, and say so.
+- **Watch for building for a bigger project:** layers with one implementation, generic frameworks, event buses, separate services, infrastructure no requirement asks for.
+- **What it handles can outweigh size.** A small internal tool that handles money or personal data needs targeted rigor where that data flows, not everywhere.
+
+### Whatever the size
 
 - **Make the smallest change that fully delivers.** No abstractions, options or layers that no current requirement needs.
 - **Never water a requirement down to make it fit.** "For now", "placeholder" and "v1" quietly drop a requirement. When something doesn't fit, pivot as described below.
@@ -170,6 +190,7 @@ An agent that keeps going in the wrong direction costs more than one that stops 
 | Letting the agent "fix" a failing test | Fixing the code; changing a test needs approval |
 | Letting the agent "try another approach" indefinitely | Stop conditions, and a report of what was ruled out |
 | Full process for every change | Process sized to the task |
+| Enterprise practices in a small internal tool | Practices chosen by the project's profile |
 | Fixing the agent's output by hand, again and again | Fixing the rule that produced it |
 
 ## Learning it: nine exercises
@@ -193,10 +214,11 @@ The principles above are meant to stay stable. This table follows the kit's curr
 | Principle | In the kit |
 |---|---|
 | Memory lives in files | `AGENTS.md`; `CONTEXT.md` levels from root to module with the `context-md` skill; local plans and notes in `.local_context/<task>/` with the `task-plans` skill; tickets fetched by the analyst and updated at handover; the `diagrams` skill |
+| Generic instructions: kit files and project files | A "From agentic-defaults" marker on every kit file, and a rule that agents never edit kit files and put project rules in "This project" |
 | Memory lives in files: keeping it true | The context check as the last step of every task, in the definition of done, the `implementation` skill and the reviewer; `check.sh`, also as an end-of-turn hook in both Claude Code and Copilot, a pre-commit reminder or a CI step |
 | Generic instructions, specific knowledge | Roles and practices with no project facts; framework pairs such as `flask` and `flask-developer`; the standard `make` commands, with project specifics only in the "This project" section of `AGENTS.md` |
 | Context is a budget | A word budget for `AGENTS.md`; skills loaded on demand; `CONTEXT.md` levels; the "Work economically" rules, including short output; defined output formats in every agent |
-| Size the process to the task | "Match the process to the size of the change"; plans only for multi-step work; blockers in the plan, and split, spike, re-plan or a visible limit instead of stand-ins |
+| Size the process and the engineering | The project profile and its tags, with the `project-profile` skill; "Match the process to the size of the change"; plans only for multi-step work; blockers in the plan, and split, spike, re-plan or a visible limit instead of stand-ins |
 | Strong models decide, everyday models do the rest | A model tier per agent; analyst and research collector read, architect and researcher judge, framework developers execute; routing that escalates blockers; a Verify command in every plan step |
 | Make the specification executable | Requirements written as observable behavior; contract-first plan steps; the `tdd` skill, with contained tests and never weakening a test; test-first framework developers |
 | Verify outcomes | The reviewer's goal check, contract and weakened-test checks; the security reviewer |

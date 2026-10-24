@@ -10,6 +10,8 @@ permissions:
 jobs:
   check:
     strategy:
+      # Run every OS to the end, so a failure on one doesn't hide the result of the other.
+      fail-fast: false
       matrix:
         # macOS runs the scripts on bash 3.2, the oldest bash they support.
         os: [ubuntu-latest, macos-latest]

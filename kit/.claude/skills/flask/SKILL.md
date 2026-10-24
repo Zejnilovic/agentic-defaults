@@ -3,6 +3,8 @@ name: flask
 description: Practices for Python backends built on Flask - app factory, blueprints or Flask-RESTX namespaces, input validation, auth, SQLAlchemy sessions, background work and pytest. Use when adding or changing Flask endpoints, services or app setup, or reviewing such changes.
 ---
 
+<!-- From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project". -->
+
 # Flask
 
 Follow the project first. Read the backend's `CONTEXT.md` and one existing endpoint, and copy its shape: blueprint or namespace, schema library, service layer, error format. The project's conventions win over this list.

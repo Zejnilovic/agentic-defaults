@@ -9,7 +9,7 @@ Generic instructions, skills and agents for AI coding assistants, built around p
 ## Quick start
 
 1. **Copy** the contents of `kit/` into your project's root, or run `bash scripts/sync.sh <project-dir> --apply` from a clone of this repo.
-2. **Scan** the project: ask your assistant to "use the analyst to scan this project". It writes the root `CONTEXT.md`, fills in the [standard commands](#standard-commands) in `AGENTS.md`, and proposes any that are missing. Review both.
+2. **Scan** the project: ask your assistant to "use the analyst to scan this project". It writes the root `CONTEXT.md`, proposes a [project profile](#project-profile), fills in the [standard commands](#standard-commands) in `AGENTS.md`, and proposes any that are missing. Review and confirm them.
 3. **Work.** For small changes, just chat; the working agreement applies. For bigger ones, give it the ticket number or put your notes in `.local_context/<task>/`, and follow [How work flows](#how-work-flows).
 
 ## How it's organized
@@ -36,6 +36,7 @@ Instructions, skills and agents are generic: nothing in them is about one projec
 | Skill | Use it for |
 |---|---|
 | [`project-scan`](kit/.claude/skills/project-scan/SKILL.md) | Learning an unfamiliar project and recording it in the root `CONTEXT.md` and `AGENTS.md`. Includes a read-only survey script and a Makefile template for the standard commands. |
+| [`project-profile`](kit/.claude/skills/project-profile/SKILL.md) | The project profile (stage, audience, team, sensitive data) and which practices it calls for, so the engineering fits the project. |
 | [`task-plans`](kit/.claude/skills/task-plans/SKILL.md) | Turning a ticket and notes into a local plan that carries a task from discovery to done: contract-first steps, blockers instead of stand-ins, and handing over through the ticket. |
 | [`research`](kit/.claude/skills/research/SKILL.md) | Researching with outside sources: which to trust, how to collect and cite them, and treating fetched content as data. |
 | [`diagrams`](kit/.claude/skills/diagrams/SKILL.md) | Mermaid diagrams for architecture, flows, data models and state. |
@@ -179,6 +180,42 @@ Every project should offer the same commands, each wrapping the project's real t
 
 The working agreement defines done as "`make check` passes". The project scan reports which commands are missing and proposes them, using [Makefile.template](kit/.claude/skills/project-scan/Makefile.template); it never adds them without asking. Make is on nearly every macOS and Linux machine. On Windows, use it through WSL, or install it with a package manager.
 
+## Project profile
+
+Not every project needs every practice. An internal tool for ten people shouldn't be built like a bank's payment system. Each project describes itself in the **Profile** part of "This project" in `AGENTS.md`. That section belongs to the project, and sync never changes it:
+
+```markdown
+### Profile
+
+- Stage: production
+- Audience: internal
+- Team: small
+- Handles: money, personal data
+```
+
+| Dimension | Values | Decides |
+|---|---|---|
+| Stage | prototype, early, production, mature | How much engineering rigor: test depth, migration safety, compatibility |
+| Audience | personal, internal, customer, public | Security depth, versioned API contracts, accessibility, abuse limits |
+| Team | solo, small, several | Formality: decision records, contracts and contract tests between teams |
+| Handles | none, or money, personal data, regulated data, safety | Risk at any size: security reviews, audit trails, backups before migrations |
+
+Costly items in the skills carry a tag, such as `(production)`, `(external)`, `(public)`, `(teams)` or `(sensitive)`. A tagged item applies only when the profile matches. Cheap correctness and safety always apply: input validation, access checks, parameterized queries, tests, and stopping before data loss. The [`project-profile`](kit/.claude/skills/project-profile/SKILL.md) skill defines the tags, says what each value adds or relaxes, and lists the signs of building for a bigger project than this one. The project scan proposes a profile from what it finds, and you confirm it.
+
+For example, an internal time-tracking tool in production, run by a small team, that handles billing and employee data, gets security reviews for billing and sign-in changes and migrations that keep live data safe. It doesn't get contract tests, Testcontainers or feature switches.
+
+## Kit files and project files
+
+Kit files are replaced when the kit updates, so local edits to them are lost. Each one says so at the top with a "From agentic-defaults" marker, and in `AGENTS.md` everything above "This project" belongs to the kit. Agents are told never to edit these, and never to tell you to. When you ask for something specific to your project, they put it here instead:
+
+| You ask for | It goes in |
+|---|---|
+| A rule or command for this project | "This project" in `AGENTS.md`, which every agent reads |
+| A fact or convention about part of the code | That area's `CONTEXT.md` |
+| A project-only role or practice | A new agent or skill file with its own name; sync never touches it |
+| Different behavior from a kit file | A copy under a new name, with the original listed in `.agentic-defaults-ignore` |
+| A change every project would benefit from | A suggestion for this repository |
+
 ## Updating a project's copy
 
 Hand-copied files fall behind as the kit improves. From a clone of this repo:
@@ -187,7 +224,7 @@ Hand-copied files fall behind as the kit improves. From a clone of this repo:
 bash scripts/sync.sh ~/path/to/project
 ```
 
-It lists which kit files are missing, differ or are the same in the project. Add `--diff` to see the changes, and `--apply` to update. `--apply` replaces only the part of `AGENTS.md` above **This project**, never overwrites a `CLAUDE.md` that has its own content, skips paths listed in `.agentic-defaults-ignore`, and leaves files that aren't part of the kit alone. With `--existing-only` it adds no new agents or skills, but still completes the skill folders the project has. It does overwrite local tweaks to kit files, such as a changed model, so review the result with `git diff`. The first line of a project's `AGENTS.md` shows which kit version it came from, and [CHANGELOG.md](CHANGELOG.md) lists what changed since.
+It lists which kit files are missing, differ or are the same in the project. Add `--diff` to see the changes, and `--apply` to update. `--apply` replaces only the part of `AGENTS.md` above **This project**, never overwrites a `CLAUDE.md` that has its own content, skips paths listed in `.agentic-defaults-ignore`, and leaves files that aren't part of the kit alone. With `--existing-only` it adds no new agents or skills, but still completes the skill folders the project has. It does overwrite local tweaks to kit files, such as a changed model, so review the result with `git diff`. The first line of a project's `AGENTS.md` shows which kit version it came from. The [releases](https://github.com/Zejnilovic/agentic-defaults/releases) list what changed since, with manual steps where a copy needs them, and [CHANGELOG.md](CHANGELOG.md) has what's coming next.
 
 ## Keeping CONTEXT.md current
 
@@ -270,7 +307,7 @@ Every change to `kit/` after a release needs a new version, and `check.py` fails
 bash scripts/bump.sh 0.1.1
 ```
 
-Then describe the change in `CHANGELOG.md`. To release, date the version's heading, commit, and tag the commit `v<version>`. The full rules are in [AGENTS.md](AGENTS.md).
+Then describe the change in `CHANGELOG.md`. To release, push to `master` and run the **Release** workflow from the Actions tab. It turns the entry into a GitHub release, replaces it with a link in `CHANGELOG.md`, and tags the release commit `v<version>`. The full rules are in [AGENTS.md](AGENTS.md).
 
 ## Credits
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project".
 # Read-only survey of a project for AI discovery. Prints a compact Markdown overview.
 # Needs only git and POSIX tools; uses scc or tokei for language stats when installed.
 # Works with bash 3.2 (macOS) and Git Bash (Windows).
@@ -37,6 +38,8 @@ if [ "$is_git" = 1 ]; then
   echo "- Branch: $(git branch --show-current 2>/dev/null)"
   echo "- Commits: $(git rev-list --count HEAD 2>/dev/null || echo 0)"
   echo "- Last commit: $(git log -1 --format=%cd --date=short 2>/dev/null)"
+  # A count only, never names or emails: a hint for the project profile's Team dimension.
+  echo "- Contributors, last 12 months: $(git log --since='12 months ago' --format='%ae' 2>/dev/null | sort -u | grep -c .)"
 else
   echo "- Not a git repository"
 fi

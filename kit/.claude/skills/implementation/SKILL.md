@@ -3,6 +3,8 @@ name: implementation
 description: Working rules for implementing a task or plan step - delivering it fully and test-first, handling problems the plan didn't mention, walls, tests that break, dependencies, when to stop, and what to report. Use when writing or changing code for a task.
 ---
 
+<!-- From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project". -->
+
 # Implementation
 
 ## Input

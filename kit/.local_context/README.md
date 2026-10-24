@@ -1,3 +1,5 @@
+<!-- From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project". -->
+
 # .local_context
 
 Private working files that help AI assistants with a task. Everything here except this README and `.gitignore` stays on your machine and is never committed.

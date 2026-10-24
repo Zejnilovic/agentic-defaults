@@ -37,10 +37,12 @@ printf '%s\n' "$new" > "$root/VERSION"
 sed "1s/agentic-defaults [0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/agentic-defaults $new/" "$root/kit/AGENTS.md" > "$tmp" \
   && cat "$tmp" > "$root/kit/AGENTS.md"
 
-# Insert the new heading before the first existing version heading.
+# Insert the new heading before the first section ("## Released" once a version is released).
 awk -v v="$new" '
-  !done && /^## [0-9]+\.[0-9]+\.[0-9]+/ { print "## " v " (unreleased)"; print ""; print "- TODO: describe the change"; print ""; done = 1 }
+  function entry() { print "## " v " (unreleased)"; print ""; print "- TODO: describe the change" }
+  !done && /^## / { entry(); print ""; done = 1 }
   { print }
+  END { if (!done) { print ""; entry() } }
 ' "$root/CHANGELOG.md" > "$tmp" && cat "$tmp" > "$root/CHANGELOG.md"
 
 echo "Bumped $current -> $new: VERSION, kit/AGENTS.md and CHANGELOG.md."

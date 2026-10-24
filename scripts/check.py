@@ -122,29 +122,43 @@ if "\n## This project" not in agreement:
 marker = re.search(r"agentic-defaults (\d+\.\d+\.\d+)", agreement)
 if not marker or marker.group(1) != version:
     problems.append(f"kit/AGENTS.md version marker doesn't match VERSION {version}")
-newest = re.search(r"^## (\d+\.\d+\.\d+)([^\n]*)\n(.*?)(?=^## |\Z)", (REPO / "CHANGELOG.md").read_text(), re.M | re.S)
-if not newest or newest.group(1) != version:
-    problems.append(f"CHANGELOG.md's newest entry doesn't match VERSION {version}")
-else:
-    if not re.search(r"^- \S", newest.group(3), re.M):
-        problems.append(f"CHANGELOG.md's {version} entry has no bullet points describing the change")
-    if "TODO" in newest.group(3):
-        problems.append(f"CHANGELOG.md's {version} entry still has a TODO: describe the change")
+# CHANGELOG.md holds at most one entry, for the unreleased VERSION; released versions are links
+# under "## Released" to their GitHub releases (scripts/release.py moves an entry there).
+changelog = (REPO / "CHANGELOG.md").read_text()
+entries = re.findall(r"^## (\d+\.\d+\.\d+)([^\n]*)\n(.*?)(?=^## |\Z)", changelog, re.M | re.S)
+for entry_version, entry_heading, _ in entries:
+    if entry_version != version or entry_heading != " (unreleased)":
+        problems.append(f"CHANGELOG.md: '## {entry_version}{entry_heading}' isn't the unreleased VERSION {version}; "
+                        f"released versions belong under '## Released' as links")
+released_links = set(re.findall(r"^- \[(\d+\.\d+\.\d+)\]\(https://github\.com/[^)\s]+/releases/tag/v\1\) "
+                                r"\(\d{4}-\d{2}-\d{2}\)$", changelog, re.M))
 
 
 def git(*args):
     return subprocess.run(["git", "-C", str(REPO), *args], capture_output=True, text=True)
 
 
+def check_unreleased_entry():
+    entry = next((body for v, heading, body in entries if v == version and heading == " (unreleased)"), None)
+    if entry is None:
+        problems.append(f"CHANGELOG.md has no '## {version} (unreleased)' entry for VERSION {version}")
+    elif not re.search(r"^- \S", entry, re.M):
+        problems.append(f"CHANGELOG.md's {version} entry has no bullet points describing the change")
+    elif "TODO" in entry:
+        problems.append(f"CHANGELOG.md's {version} entry still has a TODO: describe the change")
+
+
 # Release rule: once VERSION is tagged as released, any change to kit/ needs a new version.
 tag = f"v{version}"
 if git("rev-parse", "--git-dir").returncode != 0:
     release_note = "release rule skipped (not a git repository)"
+    if version not in released_links:
+        check_unreleased_entry()
 elif git("rev-parse", "-q", "--verify", f"refs/tags/{tag}").returncode == 0:
     release_note = f"released as {tag}"
-    if newest and not re.search(r"\(\d{4}-\d{2}-\d{2}\)", newest.group(2)):
-        problems.append(f"{version} is released as {tag}, so its CHANGELOG.md heading needs the release date, "
-                        f"for example '## {version} (YYYY-MM-DD)'")
+    if any(v == version for v, _, _ in entries):
+        problems.append(f"CHANGELOG.md: {version} is released as {tag}, so its entry belongs in the GitHub release, "
+                        f"not under '## {version}'")
     changed = sorted(set(git("diff", "--name-only", tag, "--", "kit").stdout.splitlines())
                      | set(git("ls-files", "--others", "--exclude-standard", "--", "kit").stdout.splitlines()))
     if changed:
@@ -154,9 +168,26 @@ elif git("rev-parse", "-q", "--verify", f"refs/tags/{tag}").returncode == 0:
                         f"skills or rules, major for renames or removals")
 else:
     release_note = f"not released yet (no tag {tag})"
+    check_unreleased_entry()
+
+# Every released (tagged) version is linked under "## Released".
+if git("rev-parse", "--git-dir").returncode == 0:
+    for released in git("tag", "-l", "v*").stdout.split():
+        if released[1:] not in released_links:
+            problems.append(f"CHANGELOG.md: {released[1:]} is released as {released}, so '## Released' needs "
+                            f"'- [{released[1:]}](https://github.com/<owner>/<repo>/releases/tag/{released}) (YYYY-MM-DD)'")
+
 words = len(agreement.split())
 if words > AGREEMENT_WORD_BUDGET:
     problems.append(f"kit/AGENTS.md has {words} words, over the {AGREEMENT_WORD_BUDGET}-word budget")
+
+# Kit-owned files say so, so agents in a project know not to edit them. Templates are exempt:
+# agents copy them into new project files.
+marked = [*AGENTS_DIR.glob("*.md"), *SKILLS_DIR.glob("*/SKILL.md"), *KIT.rglob("*.sh"),
+          KIT / ".local_context/README.md", KIT / ".local_context/.gitignore", KIT / "AGENTS.md"]
+for path in marked:
+    if "From agentic-defaults" not in path.read_text()[:1500]:
+        problems.append(f"{rel(path)}: missing the 'From agentic-defaults' marker near the top")
 
 for path in KIT.rglob("*.json"):
     try:

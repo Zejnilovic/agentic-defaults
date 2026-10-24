@@ -3,6 +3,8 @@ name: debugging
 description: Find the root cause of a bug or failing test before fixing it. Use when something behaves unexpectedly, a test fails for an unclear reason, or a fix attempt didn't work.
 ---
 
+<!-- From agentic-defaults. Sync replaces this file: don't edit it. Project rules go in AGENTS.md "This project". -->
+
 # Debugging
 
 Find the cause first, then fix it once. Guessing at fixes wastes more time than finding the cause.
