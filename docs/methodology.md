@@ -223,4 +223,4 @@ The principles above are meant to stay stable. This table follows the kit's curr
 | Make the specification executable | Requirements written as observable behavior; contract-first plan steps; the `tdd` skill, with contained tests and never weakening a test; test-first framework developers |
 | Verify outcomes | The reviewer's goal check, contract and weakened-test checks; the security reviewer |
 | Bound the agent | The `implementation` skill's rules for unplanned work, walls and stopping; the database skill's hard stops; the dependency rules |
-| Improve the system | A versioned kit in packs, installed and updated by [agd](https://github.com/Zejnilovic/agd), which keeps each project's own parts; `scripts/check.py` and tests |
+| Improve the system | Session notes on request with the `session-retro` skill, sent back to the kit with `agd feedback` or an issue form; a versioned kit in packs, installed and updated by [agd](https://github.com/Zejnilovic/agd), which keeps each project's own parts; `scripts/check.py` and tests |

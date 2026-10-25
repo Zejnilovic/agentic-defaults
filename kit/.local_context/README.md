@@ -14,6 +14,8 @@ One folder per task or research topic, for example `.local_context/csv-export/`:
 - `plan.md`: the task's plan, written by the assistants as the work goes,
 - `sources.md` and `research.md`: collected sources and research answers.
 
+Session retro notes, written when you ask for one (the `session-retro` skill), go in `feedback/`.
+
 ## How assistants use it
 
 - They read it during discovery and planning, and keep the plan here while the work is in progress.

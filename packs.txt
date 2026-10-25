@@ -2,7 +2,7 @@
 # Each kit file is in exactly one pack. A path ending in / means every file under that folder.
 # Paths are relative to kit/. scripts/check.py checks this file.
 
-min-agd 0.1.0
+min-agd 0.2.0
 
 pack core
   AGENTS.md
@@ -22,6 +22,7 @@ pack core
   .claude/skills/implementation/
   .claude/skills/project-profile/
   .claude/skills/project-scan/
+  .claude/skills/session-retro/
   .claude/skills/task-plans/
   .claude/skills/tdd/
 

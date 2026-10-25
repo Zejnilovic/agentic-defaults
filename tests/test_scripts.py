@@ -395,7 +395,8 @@ class CheckPacksTest(CheckCopyCase):
         self.assert_fails(tester, "## This project")
 
     def test_min_agd_is_required_and_a_version(self):
-        self.edit_packs("min-agd 0.1.0", "min-agd 0.1")
+        line = re.search(r"^min-agd \S+$", self.read("packs.txt"), re.M).group(0)
+        self.edit_packs(line, "min-agd 0.1")
         self.assert_fails("packs.txt:")
         self.edit_packs("min-agd 0.1\n", "")
         self.assert_fails("min-agd")

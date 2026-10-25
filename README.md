@@ -60,6 +60,7 @@ Instructions, skills and agents are generic: nothing in them is about one projec
 | [`diagrams`](kit/.claude/skills/diagrams/SKILL.md) | Mermaid diagrams for architecture, flows, data models and state. |
 | [`context-md`](kit/.claude/skills/context-md/SKILL.md) | `CONTEXT.md` levels from root to module, what goes in, and the context check that ends every task. Includes a template and a check script, which can also run as a hook. |
 | [`tdd`](kit/.claude/skills/tdd/SKILL.md) | The test-first loop, how much to test, keeping tests contained, never weakening a test, refactoring safely. |
+| [`session-retro`](kit/.claude/skills/session-retro/SKILL.md) | On request, a short note on how a session went: outcome, corrections, rework, cost, the kit file behind a problem and a fix, ready to send back with `agd feedback`. |
 | [`debugging`](kit/.claude/skills/debugging/SKILL.md) | Finding the root cause before fixing, with a rule for when to stop guessing. |
 | [`commits-and-prs`](kit/.claude/skills/commits-and-prs/SKILL.md) | Splitting work into commits, writing messages, and preparing and describing pull requests. Includes git safety rules for agents. |
 | [`implementation`](kit/.claude/skills/implementation/SKILL.md) | The shared working rules of all developer agents: deliver fully, contracts first, handle unplanned problems and walls, tests that break, dependencies, when to stop, what to report. |
@@ -170,7 +171,7 @@ agd installs the kit in packs, so a project gets only the frameworks it uses. Fe
 
 | Pack | Contents | Requires |
 |---|---|---|
-| `core` | The working agreement, `.local_context/`, the analyst, architect, developer, tester, reviewer, security reviewer and documenter, and the skills they use | |
+| `core` | The working agreement, `.local_context/`, the analyst, architect, developer, tester, reviewer, security reviewer and documenter, the skills they use, and `session-retro` | |
 | `research` | The research collector and the researcher, and the `research` skill | `core` |
 | `flask`, `spring`, `react`, `relational-database` | Each framework's developer and skill | `core` |
 | `copilot-hook` | The end-of-turn context check for Copilot | `core` |
@@ -339,6 +340,14 @@ npm install -g @mermaid-js/mermaid-cli
 ## Feedback
 
 It's early days. If something works well for you, breaks, or is missing, [open an issue](https://github.com/Zejnilovic/agentic-defaults/issues) or start a [discussion](https://github.com/Zejnilovic/agentic-defaults/discussions). Problems with installing or updating belong in [agd's issues](https://github.com/Zejnilovic/agd/issues).
+
+**A kit file made an agent go wrong?** In a project installed with agd (0.2.0 or newer), report it from the project:
+
+```bash
+agd feedback
+```
+
+agd asks which kit files, what went wrong, what you expected and how the task ended. If you already have a note, for example one the agent wrote when you asked it to "retro this session" (the `session-retro` skill), pass it instead: `agd feedback .local_context/feedback/<note>.md`. Either way agd adds the kit version and whether you changed each file, and opens a pre-filled issue for you to review. Nothing is posted until you submit it. Without agd, use the [session feedback form](https://github.com/Zejnilovic/agentic-defaults/issues/new?template=session-feedback.yml).
 
 ## Working on this repo
 
