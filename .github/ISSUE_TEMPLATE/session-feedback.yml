@@ -41,6 +41,15 @@ body:
         - failed
     validations:
       required: true
+  - type: dropdown
+    id: verdict
+    attributes:
+      label: Verdict
+      description: From the retro note, if you have one.
+      options:
+        - went well
+        - mixed
+        - went badly
   - type: input
     id: kit-file
     attributes:

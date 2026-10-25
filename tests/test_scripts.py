@@ -559,7 +559,7 @@ class StatsTest(GitRepoCase):
         # A PATH with the tools the script needs, but no jq.
         bin_dir = pathlib.Path(self._config.name) / "bin"
         bin_dir.mkdir()
-        for tool in ("bash", "git", "ls", "head", "sed", "awk", "tr", "cat", "basename", "dirname", "wc", "sort", "mktemp", "rm"):
+        for tool in ("bash", "git", "ls", "head", "sed", "awk", "tr", "cat", "basename", "dirname", "wc", "sort", "mktemp", "rm", "tail"):
             if shutil.which(tool):
                 (bin_dir / tool).symlink_to(shutil.which(tool))
         result = self.stats(session_id=self.session_id, env={"PATH": str(bin_dir)})
@@ -576,7 +576,40 @@ class StatsTest(GitRepoCase):
             subprocess.run(["git", "commit", "-q", "-m", name], cwd=self.root, capture_output=True,
                            env={**GIT_ENV, "GIT_COMMITTER_DATE": when, "GIT_AUTHOR_DATE": when})
         result = self.stats(session_id=self.session_id)
-        self.assertIn("- Commits since the session started: 1", result.stdout)
+        self.assertIn("- Commits since the session started: 1 (+1 -0)", result.stdout)
+
+    @unittest.skipUnless(shutil.which("jq"), "needs jq")
+    def test_prompts_lists_only_what_the_user_typed(self):
+        session = self.config / "prompts.jsonl"
+        self.write_session(session, SESSION[:-2] + [user("line one\nline two " + "y" * 400)])
+        result = self.stats("--prompts", str(session))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        lines = result.stdout.splitlines()
+        self.assertIn("1. Please add the SECRET-TEXT export", lines)
+        self.assertIn("2. Now fix it", lines)
+        self.assertTrue(lines[-1].startswith("3. line one line two yyy"), lines[-1])
+        self.assertTrue(lines[-1].endswith("…") and len(lines[-1]) < 320, lines[-1])
+        self.assertNotIn("Request interrupted", result.stdout)
+        self.assertNotIn("/model", result.stdout)
+        self.assertNotIn("Caveat", result.stdout)
+
+    def write_log(self, rows):
+        header = "date\ttask\tverdict\tprompts\tcorrections\ttool_calls\toutput_tokens\tcache_read_tokens\tlines_changed\n"
+        body = "".join(f"2026-10-0{i + 1}\ttask{i}\twent well\t3\t0\t{calls}\t{tokens}\t1000\t20\n"
+                       for i, (calls, tokens) in enumerate(rows))
+        write(self.root, ".local_context/feedback/log.tsv", header + body)
+
+    def test_baseline_is_the_median_of_earlier_retros(self):
+        self.write_log([(2, 100), (50, 900), (4, 300)])
+        result = self.stats(session_id=self.session_id)
+        self.assertIn("- Usual for this project (median of the last 3 retros): output tokens 300, tool calls 4",
+                      result.stdout)
+
+    def test_no_baseline_before_three_retros(self):
+        self.write_log([(2, 100), (4, 300)])
+        result = self.stats(session_id=self.session_id)
+        self.assertIn("- Usual for this project: no baseline yet (fewer than 3 retros in .local_context/feedback/log.tsv)",
+                      result.stdout)
 
 
 if __name__ == "__main__":
