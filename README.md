@@ -60,7 +60,7 @@ Instructions, skills and agents are generic: nothing in them is about one projec
 | [`diagrams`](kit/.claude/skills/diagrams/SKILL.md) | Mermaid diagrams for architecture, flows, data models and state. |
 | [`context-md`](kit/.claude/skills/context-md/SKILL.md) | `CONTEXT.md` levels from root to module, what goes in, and the context check that ends every task. Includes a template and a check script, which can also run as a hook. |
 | [`tdd`](kit/.claude/skills/tdd/SKILL.md) | The test-first loop, how much to test, keeping tests contained, never weakening a test, refactoring safely. |
-| [`session-retro`](kit/.claude/skills/session-retro/SKILL.md) | On request, a short note on how a session went: outcome, corrections, rework, cost, the kit file behind a problem and a fix, ready to send back with `agd feedback`. |
+| [`session-retro`](kit/.claude/skills/session-retro/SKILL.md) | On request, a short note on how a session went: outcome, corrections, rework, cost, the kit file behind a problem and a fix, ready to send back with `agd feedback`. Includes a read-only script that counts a Claude Code session's tokens, prompts and tool calls from its local files. |
 | [`debugging`](kit/.claude/skills/debugging/SKILL.md) | Finding the root cause before fixing, with a rule for when to stop guessing. |
 | [`commits-and-prs`](kit/.claude/skills/commits-and-prs/SKILL.md) | Splitting work into commits, writing messages, and preparing and describing pull requests. Includes git safety rules for agents. |
 | [`implementation`](kit/.claude/skills/implementation/SKILL.md) | The shared working rules of all developer agents: deliver fully, contracts first, handle unplanned problems and walls, tests that break, dependencies, when to stop, what to report. |

@@ -14,6 +14,7 @@ KIT = REPO / "kit"
 CONTEXT_CHECK = KIT / ".claude/skills/context-md/check.sh"
 SURVEY = KIT / ".claude/skills/project-scan/survey.sh"
 SYNC = REPO / "scripts/sync.sh"
+STATS = KIT / ".claude/skills/session-retro/stats.sh"
 
 GIT_ENV = {
     **os.environ,
@@ -437,6 +438,145 @@ class SurveyTest(GitRepoCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("# Survey:", result.stdout)
         self.assertIn("## Docs and AI context", result.stdout)
+
+
+def assistant(msg_id, model, tools=(), usage=None, ts="2026-10-25T10:00:00.000Z", sidechain=False):
+    content = [{"type": "tool_use", "id": f"{msg_id}-{i}", "name": name, "input": {}} for i, name in enumerate(tools)]
+    return {"type": "assistant", "timestamp": ts, "isSidechain": sidechain,
+            "message": {"id": msg_id, "model": model, "content": content or [{"type": "text", "text": "ok"}],
+                        "usage": usage or {"input_tokens": 10, "output_tokens": 100,
+                                           "cache_read_input_tokens": 1000, "cache_creation_input_tokens": 50}}}
+
+
+def user(content, ts="2026-10-25T10:00:00.000Z", **extra):
+    return {"type": "user", "timestamp": ts, "message": {"role": "user", "content": content}, **extra}
+
+
+def tool_result(error=False, decision="accept"):
+    return user([{"type": "tool_result", "tool_use_id": "t", "content": "output", "is_error": error}],
+                permissionDecision={"decision": decision})
+
+
+SESSION = [
+    {"type": "custom-title", "customTitle": "x"},
+    user("Please add the SECRET-TEXT export", ts="2026-10-25T10:00:00.000Z"),
+    # One API call is logged once per content block: same message id, counted once.
+    assistant("m1", "claude-sonnet-5-5", tools=["Bash"]),
+    assistant("m1", "claude-sonnet-5-5", tools=["Edit"]),
+    tool_result(),
+    tool_result(error=True),
+    assistant("m2", "claude-sonnet-5-5", tools=["Bash"]),
+    tool_result(decision="reject"),
+    user([{"type": "text", "text": "[Request interrupted by user for tool use]"}]),
+    user("<command-name>/model</command-name>"),
+    user("Caveat: generated", isMeta=True),
+    user([{"type": "text", "text": "<ide_opened_file>a.py</ide_opened_file>"}, {"type": "text", "text": "Now fix it"}]),
+    assistant("m3", "claude-sonnet-5-5", ts="2026-10-25T10:30:00.000Z"),
+    "not json at all",
+]
+SUBAGENT = [
+    user("Find the files", isSidechain=True),
+    assistant("s1", "claude-haiku-5-5", tools=["Grep"], sidechain=True,
+              usage={"input_tokens": 1, "output_tokens": 20, "cache_read_input_tokens": 0, "cache_creation_input_tokens": 0}),
+]
+
+
+class StatsTest(GitRepoCase):
+    """session-retro's stats.sh: counts from Claude Code's local session files, never their text."""
+
+    def setUp(self):
+        super().setUp()
+        self._config = tempfile.TemporaryDirectory()
+        self.config = pathlib.Path(self._config.name)
+        self.session_id = "11111111-2222-3333-4444-555555555555"
+        # Claude Code names a project's folder after its path, so it starts with "-".
+        self.folder = self.config / "projects" / re.sub(r"[^A-Za-z0-9]", "-", os.path.realpath(self.root))
+        self.write_session(self.folder / f"{self.session_id}.jsonl", SESSION)
+        self.write_session(self.folder / self.session_id / "subagents" / "agent-a1.jsonl", SUBAGENT)
+
+    def tearDown(self):
+        self._config.cleanup()
+        super().tearDown()
+
+    def write_session(self, path, events):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("".join((e if isinstance(e, str) else json.dumps(e)) + "\n" for e in events))
+
+    def stats(self, *args, env=None, session_id=None):
+        env = {**GIT_ENV, "CLAUDE_CONFIG_DIR": str(self.config), **(env or {})}
+        env.pop("CLAUDE_CODE_SESSION_ID", None)
+        if session_id:
+            env["CLAUDE_CODE_SESSION_ID"] = session_id
+        return subprocess.run(["bash", str(STATS), *args], cwd=self.root, env=env, capture_output=True, text=True)
+
+    @unittest.skipUnless(shutil.which("jq"), "needs jq")
+    def test_counts_one_session_and_its_subagents(self):
+        result = self.stats(session_id=self.session_id)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        out = result.stdout
+        self.assertIn(f"- Session: {self.session_id} (CLAUDE_CODE_SESSION_ID)", out)
+        self.assertIn("- Time: 30 min", out)
+        self.assertIn("- Models: claude-sonnet-5-5 (3 calls), claude-haiku-5-5 (1 calls)", out)
+        self.assertIn("- Tokens: input 31, output 320, cache read 3000, cache write 150", out)
+        self.assertIn("- Prompts: 2, interrupts: 1, denied tool calls: 1", out)
+        self.assertIn("- Tool calls: 4, failed: 1 (Bash 2, Edit 1, Grep 1)", out)
+        self.assertIn("- Subagents: 1", out)
+
+    @unittest.skipUnless(shutil.which("jq"), "needs jq")
+    def test_never_prints_session_text(self):
+        result = self.stats(session_id=self.session_id)
+        self.assertNotIn("SECRET-TEXT", result.stdout + result.stderr)
+        self.assertNotIn("fix it", result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which("jq"), "needs jq")
+    def test_without_session_id_takes_the_newest_session_of_this_folder(self):
+        older = self.folder / "00000000-0000-0000-0000-000000000000.jsonl"
+        self.write_session(older, [assistant("o1", "claude-opus-5-5")])
+        os.utime(older, (1, 1))
+        result = self.stats()
+        self.assertIn(f"- Session: {self.session_id} (newest for this folder", result.stdout)
+        self.assertIn("claude-sonnet-5-5", result.stdout)
+
+    @unittest.skipUnless(shutil.which("jq"), "needs jq")
+    def test_takes_a_session_file_as_argument(self):
+        other = self.config / "elsewhere.jsonl"
+        self.write_session(other, [assistant("o1", "claude-opus-5-5")])
+        result = self.stats(str(other), session_id=self.session_id)
+        self.assertIn("- Models: claude-opus-5-5 (1 calls)", result.stdout)
+
+    def test_reports_no_session_and_still_counts_git(self):
+        shutil.rmtree(self.config / "projects")
+        write(self.root, "a.py", "one\n")
+        self.commit()
+        write(self.root, "a.py", "one\ntwo\nthree\n")
+        write(self.root, "b.py", "new\n")
+        result = self.stats()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("No Claude Code session found", result.stdout)
+        self.assertIn("- Uncommitted: 1 changed files (+2 -0), 1 new files", result.stdout)
+
+    def test_without_jq_says_so_and_still_counts_git(self):
+        # A PATH with the tools the script needs, but no jq.
+        bin_dir = pathlib.Path(self._config.name) / "bin"
+        bin_dir.mkdir()
+        for tool in ("bash", "git", "ls", "head", "sed", "awk", "tr", "cat", "basename", "dirname", "wc", "sort", "mktemp", "rm"):
+            if shutil.which(tool):
+                (bin_dir / tool).symlink_to(shutil.which(tool))
+        result = self.stats(session_id=self.session_id, env={"PATH": str(bin_dir)})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("not shown: install jq", result.stdout)
+        self.assertIn("- Uncommitted:", result.stdout)
+
+    @unittest.skipUnless(shutil.which("jq"), "needs jq")
+    def test_counts_commits_since_the_session_started(self):
+        # The fixture session runs from 10:00 to 10:30 UTC on 2026-10-25.
+        for name, when in (("before.py", "2026-10-25T09:00:00Z"), ("during.py", "2026-10-25T10:15:00Z")):
+            write(self.root, name)
+            run(["git", "add", "-A"], self.root)
+            subprocess.run(["git", "commit", "-q", "-m", name], cwd=self.root, capture_output=True,
+                           env={**GIT_ENV, "GIT_COMMITTER_DATE": when, "GIT_AUTHOR_DATE": when})
+        result = self.stats(session_id=self.session_id)
+        self.assertIn("- Commits since the session started: 1", result.stdout)
 
 
 if __name__ == "__main__":

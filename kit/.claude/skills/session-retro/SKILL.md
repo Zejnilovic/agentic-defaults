@@ -11,11 +11,11 @@ A retro turns one session into a short note: did the work get done, what had to 
 
 ## Steps
 
-1. **Collect** from this conversation only. Don't re-run commands or re-read files.
+1. **Collect** from this conversation. Don't re-run the session's commands or re-read files.
    - Outcome: done, partly done or failed, against what the user asked for.
    - Corrections: each time the user redirected you, and why.
    - Rework: what tests, the reviewer or the user caught after you said a step was done.
-   - Cost: the models used, and tokens or premium requests only if the tool showed numbers in this conversation. Otherwise write "not shown". Never estimate.
+   - Cost: in Claude Code, run `bash .claude/skills/session-retro/stats.sh` and use its numbers. It prints counts only: time, models, tokens, prompts, tool calls, subagents and git changes. In other tools, use only numbers the tool showed in this conversation. Otherwise write "not shown". Never estimate.
 2. **Find the cause.** For each problem, name the kit file whose rule was involved by its installed path, such as `.claude/skills/tdd/SKILL.md` or `AGENTS.md`, and say whether the rule was **missing**, **wrong**, **ignored** or **too long**. Kit files carry the "From agentic-defaults" marker. If no kit file was involved, write "not a kit problem".
 3. **Propose a fix.**
    - **Project-only**: it fits only this project. Name where it goes: a `## This project` section at the end of that agent or skill, "This project" in `AGENTS.md`, or a `CONTEXT.md`.
@@ -42,7 +42,7 @@ done | partly done | failed: <one line>
 - <what was caught afterwards, and by whom> (or "none")
 
 ## Cost
-<numbers the tool showed, or "not shown">
+<the lines stats.sh printed, numbers the tool showed, or "not shown">
 
 ## Cause
 - `<installed path>`: missing | wrong | ignored | too long. <which rule, one line>

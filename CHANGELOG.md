@@ -7,6 +7,7 @@ Version numbers: **major** when something is renamed or removed and existing cop
 ## 0.5.0 (unreleased)
 
 - **`session-retro` skill** (core pack): when the user asks for a retro, the agent writes a short note to `.local_context/feedback/<date>-<task>.md` with the outcome, corrections, rework, cost (only numbers the tool shows), the kit file behind a problem by its installed path with whether its rule was missing, wrong, ignored or too long, and a project-only or generic fix. The user confirms the outcome and corrections first. For a generic fix the agent suggests `agd feedback <note>`; it never sends anything itself. `.local_context/README.md` mentions the `feedback/` folder.
+- **`session-retro/stats.sh`**: a read-only script that the retro runs in Claude Code for its Cost section. From Claude Code's local session files it counts time, models, tokens, prompts, interrupts, denied and failed tool calls, and subagents; from git, commits since the session started and uncommitted changes. It prints counts only, never session text. The session numbers need jq; without it the script says so and prints the git numbers. The session files are an undocumented format, so the numbers can break with a Claude Code update.
 - **Needs agd 0.2.0**: `packs.txt` sets `min-agd 0.2.0`, the release that adds `agd feedback`.
 
 Manual steps for existing copies:
