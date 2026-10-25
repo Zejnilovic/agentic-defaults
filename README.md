@@ -2,15 +2,33 @@
 
 Sensible defaults for agentic coding: test-first, reasonable coverage, and context that stays current.
 
-Generic instructions, skills and agents for AI coding assistants, built around practical delivery and modest model budgets. Everything in [`kit/`](kit/) works in both **Claude Code** and **GitHub Copilot** (VS Code). Install it in a project with [agd](https://github.com/Zejnilovic/agd), or copy what you need.
+Generic instructions, skills and agents for AI coding assistants, built around practical delivery and modest model budgets. Everything in [`kit/`](kit/) works in both **Claude Code** and **GitHub Copilot** (VS Code). Other tools that read `AGENTS.md`, such as Cursor, get the working agreement; the skills and agents have only been tested in Claude Code and Copilot. Install it in a project with [agd](https://github.com/Zejnilovic/agd), or copy what you need.
 
-**Why it works this way:** [Working with coding agents](docs/methodology.md) explains the method behind the kit. It covers the principles, rules of thumb, anti-patterns and nine hands-on exercises, and is written to stay true as tools and models change.
+**Why it works this way:** [Working with coding agents](https://zejnilovic.eu/guides/working-with-coding-agents) explains the method behind the kit ([same text in this repo](docs/methodology.md)). It covers the principles, rules of thumb, anti-patterns and nine hands-on exercises, and is written to stay true as tools and models change.
 
 ## Quick start
 
-1. **Install** [agd](https://zejnilovic.github.io/agd) with `brew install zejnilovic/tap/agd`, or without Homebrew with `curl -fsSL https://raw.githubusercontent.com/Zejnilovic/agd/main/install.sh | bash`. Then run `agd init` in your project's root and commit the new files with `.agd.lock`. That installs every [pack](#packs); `agd init --with flask,react` installs only those and the packs they require, so add `copilot-hook` to the list if you use Copilot. Without agd, copy the contents of `kit/` into the project's root.
-2. **Scan** the project: ask your assistant to "use the analyst to scan this project". It writes the root `CONTEXT.md`, proposes a [project profile](#project-profile), fills in the [standard commands](#standard-commands) in `AGENTS.md`, and proposes any that are missing. Review and confirm them.
-3. **Work.** For small changes, just chat; the working agreement applies. For bigger ones, give it the ticket number or put your notes in `.local_context/<task>/`, and follow [How work flows](#how-work-flows).
+1. **Install** [agd](https://zejnilovic.github.io/agd), with Homebrew:
+
+   ```bash
+   brew install zejnilovic/tap/agd
+   ```
+
+   Or without Homebrew:
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/Zejnilovic/agd/main/install.sh | bash
+   ```
+
+2. **Add the kit** in your project's root, then commit the new files together with `.agd.lock`:
+
+   ```bash
+   agd init
+   ```
+
+   That installs every [pack](#packs). To install only some, name them, for example `agd init --with flask,react`; the packs they require come along. Add `copilot-hook` to the list if you use Copilot. Without agd, copy the contents of `kit/` into the project's root.
+3. **Scan** the project: ask your assistant to "use the analyst to scan this project". It writes the root `CONTEXT.md`, proposes a [project profile](#project-profile), fills in the [standard commands](#standard-commands) in `AGENTS.md`, and proposes any that are missing. Review and confirm them.
+4. **Work.** For small changes, just chat; the working agreement applies. For bigger ones, give it the ticket number or put your notes in `.local_context/<task>/`, and follow [How work flows](#how-work-flows).
 
 ## How it's organized
 
@@ -318,6 +336,10 @@ npm install -g @mermaid-js/mermaid-cli
 - **`skills` in an agent's frontmatter** preloads those skills in Claude Code. Copilot ignores the field and loads skills when they're relevant.
 - **Another framework** (FastAPI, Django, Angular, Vue and so on) is a pair: a `<framework>` skill and a `<framework>-developer` agent. Copy the closest existing pair, keep the skill's sections (follow the project first, structure, the framework's own concerns, tests, stop and report before), and keep `implementation` in the agent's `skills` list so it follows the shared rules. Project-specific conventions go in the area's `CONTEXT.md`, not in the skill.
 
+## Feedback
+
+It's early days. If something works well for you, breaks, or is missing, [open an issue](https://github.com/Zejnilovic/agentic-defaults/issues) or start a [discussion](https://github.com/Zejnilovic/agentic-defaults/discussions). Problems with installing or updating belong in [agd's issues](https://github.com/Zejnilovic/agd/issues).
+
 ## Working on this repo
 
 Rules for maintainers and AI assistants are in [AGENTS.md](AGENTS.md). Before committing, run:
@@ -335,7 +357,7 @@ python3 -m unittest discover -s tests
 Every change to `kit/` after a release needs a new version, and `check.py` fails until there is one. Start it with:
 
 ```bash
-bash scripts/bump.sh 0.1.1
+bash scripts/bump.sh 0.4.1
 ```
 
 Then describe the change in `CHANGELOG.md`. To release, push to `master` and run the **Release** workflow from the Actions tab. It turns the entry into a GitHub release, replaces it with a link in `CHANGELOG.md`, and tags the release commit `v<version>`. The full rules are in [AGENTS.md](AGENTS.md).
