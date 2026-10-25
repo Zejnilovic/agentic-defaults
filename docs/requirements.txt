@@ -1,0 +1,3 @@
+# The site's build tools, pinned. The Docs workflow installs them; see mkdocs.yml.
+mkdocs==1.6.1
+mkdocs-material==9.7.7

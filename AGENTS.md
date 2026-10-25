@@ -48,4 +48,4 @@ The kit must work well on fast, inexpensive models, not only the strongest ones.
 - Keep `kit/AGENTS.md` short. Move procedures into skills.
 - Agents are roles (who does the work); skills are practices (how it's done). An agent names the skills it uses and keeps a one-line version of their essential rule, so it still behaves sensibly if a skill wasn't copied. Don't paste a skill's content into an agent.
 - Roles don't delegate to other agents. Each one returns its result to whoever called it.
-- When adding, renaming or removing anything in `kit/`, update the tables in `README.md`, including Packs, and its pack in `packs.txt`.
+- When adding, renaming or removing anything in `kit/`, update the tables in `README.md`, including Packs, the matching site pages (`docs/agents.md`, `docs/skills.md`, `docs/packs.md`), and its pack in `packs.txt`.
