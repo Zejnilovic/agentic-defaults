@@ -150,6 +150,56 @@ class ContextCheckTest(GitRepoCase):
         write(self.root, "scripts/deploy.sh", "changed\n")
         self.assertIn("No CONTEXT.md covers", self.check().stdout)
 
+    # Files that agd installs belong to their source, not to the project; .agd.lock lists them.
+    def install_kit(self, *paths, lock_only=()):
+        lines = ["agd-lock 1", "source kit https://example.com/kit.git 1.0.0", "pack kit core"]
+        for rel in paths:
+            write(self.root, rel, "kit\n")
+        for rel in (*paths, *lock_only):
+            lines.append(f"file kit {rel} 0123456789abcdef0123456789abcdef01234567")
+        write(self.root, ".agd.lock", "\n".join(lines) + "\n")
+
+    def test_kit_update_needs_no_context_change(self):
+        self.install_kit(".claude/skills/context-md/check.sh", ".github/hooks/context-check.json")
+        self.commit("install kit")
+        self.install_kit(".claude/skills/context-md/check.sh", ".github/hooks/context-check.json",
+                         ".claude/skills/session-retro/stats.sh")
+        write(self.root, ".claude/skills/context-md/check.sh", "kit, updated\n")
+        result = self.check("--strict")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertNotIn("No CONTEXT.md covers", result.stdout)
+        self.assertEqual(self.hook(), {})
+
+    def test_removed_kit_files_are_skipped_with_base(self):
+        self.install_kit(".claude/skills/context-md/check.sh", ".claude/skills/terraform/plan.sh")
+        self.commit("install kit")
+        run(["git", "checkout", "-q", "-b", "remove-pack"], self.root)
+        os.remove(os.path.join(self.root, ".claude/skills/terraform/plan.sh"))
+        self.install_kit(".claude/skills/context-md/check.sh")
+        self.commit("agd remove terraform")
+        result = self.check("--strict", "--base", "main")
+        self.assertEqual(result.returncode, 0, result.stdout)
+
+    def test_project_files_next_to_kit_files_are_still_flagged(self):
+        self.install_kit(".claude/skills/context-md/check.sh")
+        self.commit("install kit")
+        write(self.root, ".claude/skills/own-skill/run.sh", "ours\n")
+        write(self.root, ".claude/skills/context-md/check.sh", "kit, updated\n")
+        result = self.check("--strict")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn(".claude/skills/own-skill/run.sh", result.stdout)
+        self.assertNotIn("context-md/check.sh", result.stdout)
+
+    def test_mixed_change_flags_only_project_code(self):
+        self.install_kit(".claude/skills/context-md/check.sh")
+        self.commit("install kit")
+        write(self.root, ".claude/skills/context-md/check.sh", "kit, updated\n")
+        write(self.root, "backend/api/orders.py", "changed\n")
+        result = self.check()
+        self.assertIn("- backend/CONTEXT.md: backend/api/orders.py", result.stdout)
+        self.assertNotIn("- CONTEXT.md", result.stdout)
+        self.assertNotIn(".agd.lock", result.stdout)
+
 
 class SyncStubTest(unittest.TestCase):
     """scripts/sync.sh is replaced by agd: it only points there."""

@@ -4,6 +4,10 @@ What changed in the kit. The next version's changes are collected here; each rel
 
 Version numbers: **major** when something is renamed or removed and existing copies need manual changes, **minor** for new agents, skills or rules, **patch** for wording and fixes. Before 1.0, a minor version may also need manual changes; its notes list them under "Manual steps". Each release is a git tag (`v0.1.0`), and the first line of a project's `AGENTS.md` shows which version its copy came from.
 
+## 0.5.1 (unreleased)
+
+- **`context-md/check.sh` skips files installed by agd** ([#12](https://github.com/Zejnilovic/agentic-defaults/issues/12)): an `agd update`, `add` or `remove` no longer asks for a `CONTEXT.md` change in `--strict` (CI) or `--hook` mode. The check skips `.agd.lock` and every path it lists, read from the working tree, from `HEAD` and, with `--base`, from where the branch started, so kit files that were deleted are skipped too. The project's own files next to kit files, such as its own skills' scripts, are still checked.
+
 ## Released
 
 - [0.5.0](https://github.com/Zejnilovic/agentic-defaults/releases/tag/v0.5.0) (2026-10-27)
