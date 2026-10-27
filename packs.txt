@@ -47,5 +47,15 @@ pack relational-database requires core
   .claude/agents/relational-database-developer.md
   .claude/skills/relational-database/
 
+pack terraform requires core
+  .claude/agents/terraform-developer.md
+  .claude/skills/terraform/
+
+pack heroku requires core
+  .claude/skills/heroku/
+
+pack aws requires core
+  .claude/skills/aws/
+
 pack copilot-hook requires core
   .github/hooks/context-check.json

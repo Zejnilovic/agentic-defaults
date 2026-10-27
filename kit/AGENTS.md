@@ -12,6 +12,7 @@ These rules apply to every task here. Project facts live in `CONTEXT.md` files a
 - Follow the patterns already in the codebase. Leave unrelated code alone, and mention what's worth fixing.
 - Never write "for now" versions, placeholders or hard-coded stand-ins. If a step can't be done as asked, stop, note the blocker in the plan, and propose options (the `implementation` skill).
 - Add a dependency only when the task needs it. If an install fails, stop: never try a similarly named package.
+- Never change live systems yourself: no apply, deploy, or cloud command that creates, changes or deletes. Plans and read-only commands are fine; give the user the exact command to run.
 - State your assumptions. Ask only when a decision is the user's and there is no sensible default.
 
 ## Kit files

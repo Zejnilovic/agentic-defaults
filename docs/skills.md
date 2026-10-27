@@ -42,5 +42,15 @@ Each framework skill pairs with a developer agent of the same name.
 | [`spring`](https://github.com/Zejnilovic/agentic-defaults/blob/master/kit/.claude/skills/spring/SKILL.md) | Java and Spring Boot: DTOs, Bean Validation, Spring Security, `@Transactional` pitfalls, JPA fetching, MockMvc and Testcontainers. |
 | [`react`](https://github.com/Zejnilovic/agentic-defaults/blob/master/kit/.claude/skills/react/SKILL.md) | React: reuse what exists, all four data states, state and effects, forms, accessibility, security, React Testing Library. |
 | [`relational-database`](https://github.com/Zejnilovic/agentic-defaults/blob/master/kit/.claude/skills/relational-database/SKILL.md) | PostgreSQL, MySQL, SQLite: expand-then-contract migrations, Alembic, Flyway and Liquibase traps, engine-specific locking, strict stop rules. |
+| [`terraform`](https://github.com/Zejnilovic/agentic-defaults/blob/master/kit/.claude/skills/terraform/SKILL.md) | Terraform, OpenTofu and Terragrunt: plan but never apply, reading every plan, `moved` blocks, `for_each` over `count`, version and lock-file pinning, state and secrets, S3 locking, `terraform test` with mock providers, strict stop rules. |
+
+## Platforms
+
+Platform skills have no developer agent of their own: every developer follows them when the app runs there.
+
+| Skill | Use it for |
+|---|---|
+| [`aws`](https://github.com/Zejnilovic/agentic-defaults/blob/master/kit/.claude/skills/aws/SKILL.md) | AWS: short-lived credentials and checking the account, which CLI commands an agent runs and which it hands to you, least-privilege IAM, public exposure, encryption, cost traps and tags. |
+| [`heroku`](https://github.com/Zejnilovic/agentic-defaults/blob/master/kit/.claude/skills/heroku/SKILL.md) | Heroku: which CLI commands an agent runs and which it hands to you, dynos and `$PORT`, config vars, release-phase migrations, Postgres connections, pipelines, review apps, Scheduler, and moving off Heroku. |
 
 Need another framework? See [Customizing](your-files.md#customizing).

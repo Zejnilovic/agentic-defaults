@@ -36,7 +36,7 @@ Items in the kit's skills marked with a tag apply only when the profile matches.
 
 - Validate input, check access to the specific record, use parameterized queries, keep secrets out of code.
 - Test the behavior you change, and never weaken a test.
-- Stop before anything that loses data or can't be undone.
+- Stop before anything that loses data or can't be undone, and never apply infrastructure changes or deploy yourself.
 - End every task with the context check.
 
 ## What each value adds or relaxes

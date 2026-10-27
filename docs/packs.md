@@ -14,6 +14,9 @@ The kit comes in packs, so a project gets only the frameworks it uses. Fewer age
 | `spring` | The Spring developer and the `spring` skill | `core` |
 | `react` | The React developer and the `react` skill | `core` |
 | `relational-database` | The relational database developer and the `relational-database` skill | `core` |
+| `terraform` | The Terraform developer and the `terraform` skill | `core` |
+| `heroku` | The `heroku` skill | `core` |
+| `aws` | The `aws` skill | `core` |
 | `copilot-hook` | The end-of-turn [context check](context.md) for Copilot | `core` |
 
 The exact file list is in [`packs.txt`](https://github.com/Zejnilovic/agentic-defaults/blob/master/packs.txt).

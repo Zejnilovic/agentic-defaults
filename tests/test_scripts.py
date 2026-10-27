@@ -428,6 +428,19 @@ class SurveyTest(GitRepoCase):
         self.assertIn("- Contributors, last 12 months: 2", result.stdout)
         self.assertNotIn("other@example.com", result.stdout)
 
+    def test_lists_infrastructure_files(self):
+        write(self.root, "infra/root.hcl", "remote_state {}\n")
+        write(self.root, "infra/dev/vpc/terragrunt.hcl", "include \"root\" {}\n")
+        write(self.root, "infra/modules/.terraform.lock.hcl", "provider {}\n")
+        write(self.root, ".tflint.hcl", "plugin {}\n")
+        write(self.root, ".pre-commit-config.yaml", "repos: []\n")
+        write(self.root, "Procfile", "web: gunicorn app:app\n")
+        result = run(["bash", str(SURVEY), self.root], self.root)
+        build = result.stdout.split("## Build, dependency, runtime and CI files", 1)[1].split("\n## ", 1)[0]
+        for path in ("infra/root.hcl", "infra/dev/vpc/terragrunt.hcl", "infra/modules/.terraform.lock.hcl",
+                     ".tflint.hcl", ".pre-commit-config.yaml", "Procfile"):
+            self.assertIn(f"- {path}\n", build)
+
     def test_reports_missing_standard_commands(self):
         write(self.root, "Makefile", "test:\n\tpytest\nlint:\n\truff .\n")
         result = run(["bash", str(SURVEY), self.root], self.root)

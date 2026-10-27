@@ -22,6 +22,7 @@ Agents are roles: who does the work. Each one returns its result to you, or to t
 | Role | Does | Edits | Tier |
 |---|---|---|---|
 | [`relational-database-developer`](https://github.com/Zejnilovic/agentic-defaults/blob/master/kit/.claude/agents/relational-database-developer.md) | Schema changes, migrations, indexes, queries and data fixes, with strict stop rules for anything irreversible. | Migrations, queries, tests | Everyday |
+| [`terraform-developer`](https://github.com/Zejnilovic/agentic-defaults/blob/master/kit/.claude/agents/terraform-developer.md) | Terraform, OpenTofu and Terragrunt modules and units, checked with plans. Never applies: hands you the command. | Infrastructure code, tests, docs | Everyday |
 | [`flask-developer`](https://github.com/Zejnilovic/agentic-defaults/blob/master/kit/.claude/agents/flask-developer.md) | Python Flask endpoints, services, jobs and integrations. | Server code, tests, docs | Everyday |
 | [`spring-developer`](https://github.com/Zejnilovic/agentic-defaults/blob/master/kit/.claude/agents/spring-developer.md) | Java Spring Boot controllers, services, repositories and configuration. | Server code, tests, docs | Everyday |
 | [`react-developer`](https://github.com/Zejnilovic/agentic-defaults/blob/master/kit/.claude/agents/react-developer.md) | React pages, components, hooks, forms and API calls. | UI code, tests, docs | Everyday |

@@ -68,6 +68,9 @@ Instructions, skills and agents are generic: nothing in them is about one projec
 | [`spring`](kit/.claude/skills/spring/SKILL.md) | Java and Spring Boot: DTOs, Bean Validation, Spring Security, `@Transactional` pitfalls, JPA fetching, MockMvc and Testcontainers. |
 | [`react`](kit/.claude/skills/react/SKILL.md) | React: reuse what exists, all four data states, state and effects, forms, accessibility, security, React Testing Library. |
 | [`relational-database`](kit/.claude/skills/relational-database/SKILL.md) | PostgreSQL, MySQL, SQLite: expand-then-contract migrations, Alembic, Flyway and Liquibase traps, engine-specific locking, strict stop rules. |
+| [`terraform`](kit/.claude/skills/terraform/SKILL.md) | Terraform, OpenTofu and Terragrunt: plan but never apply, reading every plan, `moved` blocks, `for_each` over `count`, version and lock-file pinning, state and secrets, S3 locking, `terraform test` with mock providers, strict stop rules. |
+| [`aws`](kit/.claude/skills/aws/SKILL.md) | AWS: short-lived credentials and checking the account, which CLI commands an agent runs and which it hands to you, least-privilege IAM, public exposure, encryption, cost traps and tags. |
+| [`heroku`](kit/.claude/skills/heroku/SKILL.md) | Heroku: which CLI commands an agent runs and which it hands to you, dynos and `$PORT`, config vars, release-phase migrations, Postgres connections, pipelines, review apps, Scheduler, and moving off Heroku. |
 
 ### Agents
 
@@ -78,6 +81,7 @@ Instructions, skills and agents are generic: nothing in them is about one projec
 | [`researcher`](kit/.claude/agents/researcher.md) | Answers a question that needs outside knowledge: options, a recommendation, confidence and sources. | Research notes | Strong |
 | [`architect`](kit/.claude/agents/architect.md) | Designs the approach, contract first, writes steps, diagrams and decisions into the plan, and decides blockers. | Plans and design docs | Strong |
 | [`relational-database-developer`](kit/.claude/agents/relational-database-developer.md) | Schema changes, migrations, indexes, queries and data fixes, with strict stop rules for anything irreversible. | Migrations, queries, tests | Everyday |
+| [`terraform-developer`](kit/.claude/agents/terraform-developer.md) | Terraform, OpenTofu and Terragrunt modules and units, checked with plans. Never applies: hands you the command. | Infrastructure code, tests, docs | Everyday |
 | [`flask-developer`](kit/.claude/agents/flask-developer.md) | Python Flask endpoints, services, jobs and integrations. | Server code, tests, docs | Everyday |
 | [`spring-developer`](kit/.claude/agents/spring-developer.md) | Java Spring Boot controllers, services, repositories and configuration. | Server code, tests, docs | Everyday |
 | [`react-developer`](kit/.claude/agents/react-developer.md) | React pages, components, hooks, forms and API calls. | UI code, tests, docs | Everyday |
@@ -173,7 +177,8 @@ agd installs the kit in packs, so a project gets only the frameworks it uses. Fe
 |---|---|---|
 | `core` | The working agreement, `.local_context/`, the analyst, architect, developer, tester, reviewer, security reviewer and documenter, the skills they use, and `session-retro` | |
 | `research` | The research collector and the researcher, and the `research` skill | `core` |
-| `flask`, `spring`, `react`, `relational-database` | Each framework's developer and skill | `core` |
+| `flask`, `spring`, `react`, `relational-database`, `terraform` | Each framework's developer and skill | `core` |
+| `heroku`, `aws` | Each platform's skill | `core` |
 | `copilot-hook` | The end-of-turn context check for Copilot | `core` |
 
 `agd add spring` and `agd remove spring` change a project's packs later; removing keeps the files you changed. To keep single files out, list them in `.agd-ignore` at the project root, and commit it:
