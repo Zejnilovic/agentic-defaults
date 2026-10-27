@@ -181,7 +181,7 @@ agd installs the kit in packs, so a project gets only the frameworks it uses. Fe
 | `heroku`, `aws` | Each platform's skill | `core` |
 | `copilot-hook` | The end-of-turn context check for Copilot | `core` |
 
-`agd add spring` and `agd remove spring` change a project's packs later; removing keeps the files you changed. To keep single files out, list them in `.agd-ignore` at the project root, and commit it:
+`agd add spring` and `agd remove spring` change a project's packs later; removing keeps the files you changed. A project scan proposes `agd remove` for each installed framework or platform pack the project doesn't use, and never runs it. To keep single files out, list them in `.agd-ignore` at the project root, and commit it:
 
 ```text
 # We have our own documenter

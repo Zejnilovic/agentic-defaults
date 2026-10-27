@@ -491,6 +491,32 @@ class SurveyTest(GitRepoCase):
                      ".tflint.hcl", ".pre-commit-config.yaml", "Procfile"):
             self.assertIn(f"- {path}\n", build)
 
+    def survey_section(self, heading):
+        result = run(["bash", str(SURVEY), self.root], self.root)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return result.stdout.split(f"## {heading}\n", 1)[1].split("\n## ", 1)[0]
+
+    def test_lists_installed_packs_from_agd_lock(self):
+        write(self.root, ".agd.lock", "\n".join([
+            "# Written by agd. Commit it, and don't edit it by hand.",
+            "agd-lock 1",
+            "source agentic-defaults https://github.com/Zejnilovic/agentic-defaults.git 0.5.0",
+            "pack agentic-defaults core",
+            "pack agentic-defaults flask",
+            "pack agentic-defaults react",
+            "file agentic-defaults .claude/skills/flask/SKILL.md 0123456789abcdef0123456789abcdef01234567",
+            "source team https://example.com/team.git 1.0.0",
+            "pack team python",
+        ]) + "\n")
+        packs = self.survey_section("Installed packs (.agd.lock)")
+        self.assertIn("- agentic-defaults: core, flask, react\n", packs)
+        self.assertIn("- team: python\n", packs)
+        self.assertNotIn("SKILL.md", packs)
+
+    def test_says_when_no_packs_are_installed(self):
+        write(self.root, "src/app.py", "x\n")
+        self.assertIn("None: no .agd.lock", self.survey_section("Installed packs (.agd.lock)"))
+
     def test_reports_missing_standard_commands(self):
         write(self.root, "Makefile", "test:\n\tpytest\nlint:\n\truff .\n")
         result = run(["bash", str(SURVEY), self.root], self.root)

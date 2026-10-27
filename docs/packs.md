@@ -29,4 +29,6 @@ The exact file list is in [`packs.txt`](https://github.com/Zejnilovic/agentic-de
 agd init --with flask,react
 ```
 
+Installed everything? A [project scan](project.md) proposes `agd remove <pack>` for each framework or platform pack the project doesn't use, and never runs it.
+
 Adding or removing packs later, and keeping single files out, are covered in [agd's documentation](https://zejnilovic.github.io/agd).

@@ -7,6 +7,7 @@ Version numbers: **major** when something is renamed or removed and existing cop
 ## 0.5.1 (unreleased)
 
 - **`context-md/check.sh` skips files installed by agd** ([#12](https://github.com/Zejnilovic/agentic-defaults/issues/12)): an `agd update`, `add` or `remove` no longer asks for a `CONTEXT.md` change in `--strict` (CI) or `--hook` mode. The check skips `.agd.lock` and every path it lists, read from the working tree, from `HEAD` and, with `--base`, from where the branch started, so kit files that were deleted are skipped too. The project's own files next to kit files, such as its own skills' scripts, are still checked.
+- **Project scan proposes removing unused packs** ([#13](https://github.com/Zejnilovic/agentic-defaults/issues/13)): `agd init` installs every pack, so a Python project could carry the Flask, React and Spring agents into every session. The survey now lists the packs in `.agd.lock`, and the scan compares each framework, platform or datastore pack with the stack it found and proposes `agd remove <pack>` for each one nothing uses, with its evidence. It never runs the command, and never proposes removing `core`, `research`, `copilot-hook` or a pack it isn't sure about.
 
 ## Released
 
