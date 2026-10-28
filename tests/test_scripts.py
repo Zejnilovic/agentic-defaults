@@ -200,6 +200,49 @@ class ContextCheckTest(GitRepoCase):
         self.assertNotIn("- CONTEXT.md", result.stdout)
         self.assertNotIn(".agd.lock", result.stdout)
 
+    # Dependency bumps (Renovate, Dependabot) change only version numbers, which no CONTEXT.md records.
+    def add_manifests(self):
+        write(self.root, "requirements.txt", "requests==2.31.0\npytest>=8.2.0\n")
+        write(self.root, "web/package.json", '{\n  "dependencies": {\n    "react": "^18.2.0"\n  }\n}\n')
+        write(self.root, ".github/workflows/ci.yml",
+              "steps:\n  - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1\n")
+        self.commit("manifests")
+
+    def test_version_only_bumps_are_ignored(self):
+        self.add_manifests()
+        write(self.root, "requirements.txt", "requests==2.32.3\npytest>=8.3.1\n")
+        write(self.root, "web/package.json", '{\n  "dependencies": {\n    "react": "^18.3.1"\n  }\n}\n')
+        write(self.root, ".github/workflows/ci.yml",
+              "steps:\n  - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2\n")
+        result = self.check("--strict")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertNotIn("No CONTEXT.md covers", result.stdout)
+
+    def test_version_only_bump_on_branch_is_ignored_with_base(self):
+        self.add_manifests()
+        run(["git", "checkout", "-q", "-b", "renovate"], self.root)
+        write(self.root, "requirements.txt", "requests==2.31.0\npytest>=9.0.0\n")
+        self.commit("bump pytest")
+        result = self.check("--strict", "--base", "main")
+        self.assertEqual(result.returncode, 0, result.stdout)
+
+    def test_new_dependency_is_flagged(self):
+        self.add_manifests()
+        write(self.root, "requirements.txt", "requests==2.31.0\npytest>=8.2.0\nhttpx==0.27.0\n")
+        result = self.check("--strict")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("requirements.txt", result.stdout)
+
+    def test_number_change_in_code_is_flagged(self):
+        write(self.root, "backend/api/orders.py", "TIMEOUT = 30\n")
+        self.commit("timeout")
+        write(self.root, "backend/api/orders.py", "TIMEOUT = 60\n")
+        self.assertEqual(self.check("--strict").returncode, 1)
+
+    def test_new_manifest_is_flagged(self):
+        write(self.root, "requirements.txt", "requests==2.31.0\n")
+        self.assertEqual(self.check("--strict").returncode, 1)
+
 
 class SyncStubTest(unittest.TestCase):
     """scripts/sync.sh is replaced by agd: it only points there."""
