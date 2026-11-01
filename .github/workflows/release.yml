@@ -1,7 +1,8 @@
 name: Release
 
 # Releases the "(unreleased)" version in CHANGELOG.md: its notes become a GitHub release, CHANGELOG.md
-# keeps a link, and the release commit is tagged v<version>. Start it from the Actions tab.
+# keeps a link, the release commit is tagged v<version>, and the issues the notes name are closed or
+# commented on. Start it from the Actions tab.
 on:
   workflow_dispatch:
     inputs:
@@ -12,6 +13,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: release
@@ -39,6 +41,14 @@ jobs:
           # gh release create v<version> --verify-tag --title <version> --notes-file notes.md
           { echo "## Release notes for $version"; echo; cat "$NOTES"; echo; echo '## CHANGELOG.md'; echo
             echo '```diff'; git diff CHANGELOG.md; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      # Before anything is pushed, so a wrong issue number stops the release.
+      - name: Check the issues the notes name
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          { echo; echo '## Issues'; echo; } >> "$GITHUB_STEP_SUMMARY"
+          python3 scripts/close_issues.py --version "$VERSION" --notes "$NOTES" --dry-run | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Commit and tag
         run: |
           git config user.name "github-actions[bot]"
@@ -55,3 +65,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "v$VERSION" --verify-tag --title "$VERSION" --notes-file "$NOTES"
+      # Last, because a release must exist before its issues count as fixed. If this fails, run it again by hand
+      # with the notes from the summary: it skips what is already done.
+      - name: Close and comment on issues
+        if: ${{ !inputs.dry_run }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/close_issues.py --version "$VERSION" --notes "$NOTES" | tee -a "$GITHUB_STEP_SUMMARY"

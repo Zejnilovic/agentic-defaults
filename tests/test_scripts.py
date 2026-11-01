@@ -326,6 +326,23 @@ class VersionTest(GitRepoCase):
     def read(self, rel):
         return pathlib.Path(self.root, rel).read_text()
 
+    def test_valid_issue_markers_pass(self):
+        self.bump("1.0.1")
+        self.describe("Fix one. (ref #20, ref #11, #12)\n- Fix two, see #3 for why. (#12)\n- Fix three.")
+        result = self.check()
+        self.assertEqual(result.returncode, 0, result.stdout)
+
+    def test_malformed_issue_marker_fails(self):
+        for line in ("Fix. (part of #20)", "Fix. (#20 #21)", "Fix. (refs #20)", "Fix, which closes #20.", "Fixes #20."):
+            with self.subTest(line=line):
+                self.bump("1.0.1")
+                self.describe(line)
+                result = self.check()
+                self.assertEqual(result.returncode, 1, result.stdout)
+                self.assertIn("CHANGELOG.md", result.stdout)
+                self.assertIn("#20", result.stdout)
+                run(["git", "checkout", "-q", "."], self.root)
+
     def test_released_version_with_unchanged_kit_passes(self):
         result = self.check()
         self.assertEqual(result.returncode, 0, result.stdout)
@@ -429,6 +446,142 @@ class VersionTest(GitRepoCase):
             result = self.bump(bad)
             self.assertNotEqual(result.returncode, 0, bad)
         self.assertEqual(self.read("VERSION"), "1.0.0\n")
+
+
+FAKE_GH = """#!/usr/bin/env bash
+echo "$*" >> "$GH_DIR/log"
+case "$1 $2" in
+  "issue view") cat "$GH_DIR/$3.json" 2>/dev/null || { echo "no issue $3" >&2; exit 1; } ;;
+  "issue comment") [ -f "$GH_DIR/fail-comment-$3" ] && exit 1; cat > "$GH_DIR/comment-$3.md" ;;
+esac
+"""
+
+
+class CloseIssuesTest(unittest.TestCase):
+    """scripts/close_issues.py, against a fake gh that logs its calls."""
+
+    RELEASE_LINK = "https://github.com/example/kit/releases/tag/v1.2.0)"
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.dir = pathlib.Path(self._tmp.name)
+        write(self.dir, "bin/gh", FAKE_GH)
+        (self.dir / "bin/gh").chmod(0o755)
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def issue(self, number, state="OPEN", comments=(), kind="issues"):
+        write(self.dir, f"{number}.json", json.dumps({
+            "state": state, "url": f"https://github.com/example/kit/{kind}/{number}",
+            "comments": [{"body": body} for body in comments]}))
+
+    def close(self, notes, *args):
+        write(self.dir, "notes.md", notes)
+        env = {**GIT_ENV, "GH_DIR": str(self.dir), "PATH": f"{self.dir}/bin:{os.environ['PATH']}"}
+        env.pop("GITHUB_REPOSITORY", None)
+        return subprocess.run(["python3", str(REPO / "scripts/close_issues.py"), "--repo", "example/kit",
+                               "--version", "1.2.0", "--notes", str(self.dir / "notes.md"), *args],
+                              env=env, capture_output=True, text=True)
+
+    def log(self):
+        path = self.dir / "log"
+        return path.read_text().splitlines() if path.exists() else []
+
+    def writes(self):
+        return [" ".join(line.split()[:3]) for line in self.log() if not line.startswith("issue view")]
+
+    def test_closes_fixed_issues_and_comments_on_referenced_ones(self):
+        for number in (11, 12, 20):
+            self.issue(number)
+        result = self.close("- First change. (ref #20, ref #11, #12)\n- Second, see #99. (#12)\n- Third.\n")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.writes(), ["issue comment 11", "issue comment 12", "issue close 12", "issue comment 20"])
+        fixed = (self.dir / "comment-12.md").read_text()
+        self.assertIn(f"Fixed in [1.2.0]({self.RELEASE_LINK}", fixed)
+        self.assertIn("agd update", fixed)
+        self.assertIn("- First change.\n", fixed)
+        self.assertIn("- Second, see #99.\n", fixed)
+        self.assertNotIn("Third", fixed)
+        self.assertNotIn("(ref #20", fixed)
+        related = (self.dir / "comment-20.md").read_text()
+        self.assertIn(f"[1.2.0]({self.RELEASE_LINK}", related)
+        self.assertIn("doesn't close this issue", related)
+        self.assertIn("- First change.\n", related)
+        self.assertNotIn("Second", related)
+
+    def test_fix_wins_when_an_issue_is_also_referenced(self):
+        self.issue(12)
+        result = self.close("- First. (ref #12)\n- Second. (#12)\n")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.writes(), ["issue comment 12", "issue close 12"])
+        self.assertIn("- First.\n", (self.dir / "comment-12.md").read_text())
+
+    def test_running_again_changes_nothing(self):
+        done = f"Fixed in [1.2.0]({self.RELEASE_LINK}."
+        self.issue(12, "CLOSED", [done])
+        self.issue(20, "OPEN", [done])
+        result = self.close("- First. (ref #20, #12)\n")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.writes(), [])
+
+    def test_comment_about_another_release_does_not_count(self):
+        self.issue(20, "OPEN", ["See [1.2.01](https://github.com/example/kit/releases/tag/v1.2.01)."])
+        self.close("- First. (ref #20)\n")
+        self.assertEqual(self.writes(), ["issue comment 20"])
+
+    def test_finishes_an_issue_that_was_commented_but_not_closed(self):
+        self.issue(12, "OPEN", [f"Fixed in [1.2.0]({self.RELEASE_LINK}."])
+        self.close("- First. (#12)\n")
+        self.assertEqual(self.writes(), ["issue close 12"])
+
+    def test_issue_closed_by_hand_still_gets_the_comment(self):
+        self.issue(12, "CLOSED")
+        self.close("- First. (#12)\n")
+        self.assertEqual(self.writes(), ["issue comment 12"])
+
+    def test_dry_run_writes_nothing_and_says_what_it_would_do(self):
+        self.issue(12)
+        self.issue(20)
+        result = self.close("- First. (ref #20, #12)\n", "--dry-run")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.writes(), [])
+        self.assertIn("would close #12", result.stdout)
+        self.assertIn("would comment on #20", result.stdout)
+
+    def test_bad_number_is_reported_and_the_rest_still_runs(self):
+        self.issue(13, kind="pull")
+        self.issue(20)
+        result = self.close("- First. (#12, #13, ref #20)\n")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("#12", result.stdout)
+        self.assertIn("#13", result.stdout)
+        self.assertEqual(self.writes(), ["issue comment 20"])
+
+    def test_failed_comment_leaves_the_issue_open(self):
+        self.issue(12)
+        write(self.dir, "fail-comment-12", "")
+        result = self.close("- First. (#12)\n")
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(self.writes(), ["issue comment 12"])
+
+    def test_malformed_marker_stops_before_anything_is_written(self):
+        self.issue(12)
+        result = self.close("- First. (#12)\n- Second. (part of #20)\n")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("#20", result.stdout)
+        self.assertEqual(self.log(), [])
+
+    def test_marker_on_a_continuation_line_counts(self):
+        self.issue(12)
+        self.close("- First line\n  and the second. (#12)\n")
+        self.assertEqual(self.writes(), ["issue comment 12", "issue close 12"])
+        self.assertIn("- First line and the second.\n", (self.dir / "comment-12.md").read_text())
+
+    def test_no_markers_means_no_calls(self):
+        result = self.close("- First.\n- Second, see #99.\n")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.log(), [])
 
 
 class CheckCopyCase(unittest.TestCase):

@@ -15,7 +15,9 @@ import subprocess
 import sys
 import tempfile
 
-REPO = pathlib.Path(__file__).resolve().parent.parent
+from close_issues import marker_problems
+
+REPO =pathlib.Path(__file__).resolve().parent.parent
 KIT = REPO / "kit"
 AGENTS_DIR = KIT / ".claude/agents"
 SKILLS_DIR = KIT / ".claude/skills"
@@ -148,6 +150,8 @@ def check_unreleased_entry():
         problems.append(f"CHANGELOG.md's {version} entry has no bullet points describing the change")
     elif "TODO" in entry:
         problems.append(f"CHANGELOG.md's {version} entry still has a TODO: describe the change")
+    else:
+        problems.extend(f"CHANGELOG.md's {version} entry: {problem}" for problem in marker_problems(entry))
 
 
 # Release rule: once VERSION is tagged as released, any change to kit/ or packs.txt needs a new version.
