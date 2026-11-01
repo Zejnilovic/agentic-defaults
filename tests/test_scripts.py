@@ -572,6 +572,16 @@ class CloseIssuesTest(unittest.TestCase):
         self.assertIn("#20", result.stdout)
         self.assertEqual(self.log(), [])
 
+    def test_marker_that_would_be_lost_stops_before_anything_is_written(self):
+        self.issue(12)
+        self.issue(13)
+        for notes in ("- First (#12).\n", "- First (#12) (#13)\n", "- First (ref #12) (#13).\n"):
+            with self.subTest(notes):
+                result = self.close(notes)
+                self.assertEqual(result.returncode, 1, result.stdout)
+                self.assertIn("problem:", result.stdout)
+                self.assertEqual(self.log(), [])
+
     def test_marker_on_a_continuation_line_counts(self):
         self.issue(12)
         self.close("- First line\n  and the second. (#12)\n")

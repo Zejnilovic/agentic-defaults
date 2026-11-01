@@ -17,7 +17,7 @@ import subprocess
 import sys
 
 MARKER = re.compile(r"\s*\(((?:ref )?#\d+(?:, (?:ref )?#\d+)*)\)\s*$")
-LOOKS_LIKE_MARKER = re.compile(r"\([^()]*#\d+[^()]*\)\s*$")
+LOOKS_LIKE_MARKER = re.compile(r"\([^()]*#\d+[^()]*\)[\s.,;:!?]*$")
 KEYWORD = re.compile(r"\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?):?\s+#\d+", re.I)
 
 
@@ -36,12 +36,15 @@ def marker_problems(text):
     """One message per bullet whose marker this script would misread."""
     problems = []
     for bullet in bullets(text):
+        marker = MARKER.search(bullet)
+        # What's left without a good marker: a second marker, or one with a full stop after it, would be lost.
+        rest = bullet[: marker.start()] if marker else bullet
         if KEYWORD.search(bullet):
             problems.append(f"'{KEYWORD.search(bullet).group()}': write the issue as a marker at the end of the "
                             f"bullet, such as (#12) or (ref #20, #12)")
-        elif LOOKS_LIKE_MARKER.search(bullet) and not MARKER.search(bullet):
-            problems.append(f"'{LOOKS_LIKE_MARKER.search(bullet).group().strip()}': a marker looks like (#12) or "
-                            f"(ref #20, #12)")
+        elif LOOKS_LIKE_MARKER.search(rest):
+            problems.append(f"'{LOOKS_LIKE_MARKER.search(rest).group().strip()}': a marker looks like (#12) or "
+                            f"(ref #20, #12), once, at the very end of the bullet")
     return problems
 
 
