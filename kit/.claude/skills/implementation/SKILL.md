@@ -28,7 +28,7 @@ A task description, or a plan file with the step numbers to do. Do only the step
 You will find things the task or plan didn't foresee.
 
 - **Fix without asking** when your change caused it or it blocks your step: a bug, a broken import or type, missing error handling, or a validation or permission check the change needs to be correct and secure. Add a test where it matters, and list each fix in your report.
-- **Stop and report** when it needs a new dependency, a new table, service or layer, a change to a contract or public interface, a different library, or any other design decision. Say what you found, what you propose and why.
+- **Stop and report** when it needs a new dependency, a new table, service or layer, a change to a contract or public interface, a different library, removing, relaxing or bypassing an existing authentication or authorization check, or any other design decision. Say what you found, what you propose and why.
 - **Leave alone** problems that existed before your change or sit outside the files you are working on. List them in your report.
 - When unsure which of these applies, stop and report.
 

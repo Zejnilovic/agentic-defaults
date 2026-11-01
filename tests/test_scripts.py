@@ -112,6 +112,37 @@ class ContextCheckTest(GitRepoCase):
         self.assertNotIn("backend/CONTEXT.md", self.check().stdout)
         self.assertIn("backend/CONTEXT.md", self.check("--base", "main").stdout)
 
+    def test_base_without_a_value_is_a_usage_error(self):
+        for args in (["--base"], ["--base", ""], ["--base", "--strict"]):
+            with self.subTest(args=args):
+                result = subprocess.run(["bash", str(CONTEXT_CHECK), *args], cwd=self.root, env=GIT_ENV,
+                                        capture_output=True, text=True, timeout=10)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("--base needs a git ref", result.stderr)
+
+    def test_unknown_base_ref_fails(self):
+        for args in (["--base", "no-such-ref"], ["--base", "no-such-ref", "--strict"]):
+            with self.subTest(args=args):
+                result = self.check(*args)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("Can't compare with no-such-ref", result.stderr)
+                self.assertNotIn("Nothing to check", result.stdout)
+
+    def test_base_without_shared_history_fails(self):
+        run(["git", "checkout", "-q", "--orphan", "other"], self.root)
+        self.commit("unrelated")
+        run(["git", "checkout", "-q", "main"], self.root)
+        result = self.check("--base", "other")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("Can't compare with other", result.stderr)
+        self.assertIn("fetch-depth: 0", result.stderr)
+        self.assertNotIn("Nothing to check", result.stdout)
+
+    def test_hook_stays_quiet_when_base_ref_fails(self):
+        result = subprocess.run(["bash", str(CONTEXT_CHECK), "--hook", "--base", "no-such-ref"], cwd=self.root,
+                                env=GIT_ENV, input="{}", capture_output=True, text=True)
+        self.assertEqual((result.returncode, result.stdout, result.stderr), (0, "", ""))
+
     # Hook mode speaks the JSON both Claude Code (Stop) and GitHub Copilot (agentStop) accept:
     # exit 0, and {"decision": "block", "reason": ...} on stdout to make the agent continue.
     def hook(self, stdin='{"hook_event_name": "Stop", "stop_hook_active": false}'):
@@ -740,8 +771,25 @@ class StatsTest(GitRepoCase):
     def test_no_baseline_before_three_retros(self):
         self.write_log([(2, 100), (4, 300)])
         result = self.stats(session_id=self.session_id)
-        self.assertIn("- Usual for this project: no baseline yet (fewer than 3 retros in .local_context/feedback/log.tsv)",
+        self.assertIn("- Usual for this project: no baseline yet (fewer than 3 retros with numbers in .local_context/feedback/log.tsv)",
                       result.stdout)
+
+    def test_retros_without_both_numbers_are_no_baseline(self):
+        for rows in ([(2, "-"), (4, "-"), (6, 300)], [("-", "-"), ("-", "-"), ("-", "-")]):
+            with self.subTest(rows=rows):
+                self.write_log(rows)
+                result = self.stats(session_id=self.session_id)
+                self.assertIn("no baseline yet (fewer than 3 retros with numbers", result.stdout)
+
+    def test_baseline_leaves_out_retros_without_numbers(self):
+        self.write_log([(10, 100), (20, 200), (30, 300), (40, 400), (50, 500), ("-", "-")])
+        result = self.stats(session_id=self.session_id)
+        self.assertIn("(median of the last 5 retros): output tokens 300, tool calls 30", result.stdout)
+
+    def test_baseline_takes_the_last_ten_retros_with_numbers(self):
+        self.write_log([(n, n * 10) for n in range(11, 0, -1)] + [("-", "-")])
+        result = self.stats(session_id=self.session_id)
+        self.assertIn("(median of the last 10 retros): output tokens 50, tool calls 5", result.stdout)
 
 
 if __name__ == "__main__":

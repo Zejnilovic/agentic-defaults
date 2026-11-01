@@ -69,4 +69,4 @@ In GitHub Actions, check out with `fetch-depth: 0`, then add a step:
 - run: bash .claude/skills/context-md/check.sh --base origin/${{ github.base_ref }}
 ```
 
-Add `--strict` to fail the build when there is something to check.
+Add `--strict` to fail the build when there is something to check. The step exits 2 when git can't compare with the base, for example on a shallow checkout.
