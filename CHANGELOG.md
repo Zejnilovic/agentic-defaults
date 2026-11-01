@@ -11,6 +11,9 @@ Version numbers: **major** when something is renamed or removed and existing cop
 - diagrams skill: the Mermaid check creates its output folder first, because `mmdc` fails when the folder doesn't exist.
 - session-retro `stats.sh`: the baseline counts only retros with both numbers. A `-` in the log used to count as a retro and could print `-` or a wrong median; it stays "no baseline" until 3 retros have numbers.
 - implementation skill: removing, relaxing or bypassing an existing authentication or authorization check is now listed under "Stop and report".
+- tester agent: it may change an existing test's expectations when the task says the requirement changed and the user agreed, like the other kit files. Otherwise it leaves the test and reports it.
+- Context check: "Done means" in `AGENTS.md`, the implementation skill and the context-md skill now say to add `--base origin/<default branch>` when the work is already committed. Without it the check saw only uncommitted changes. The context-md skill's `origin/main` example is gone, and it shows how to find the default branch.
+- task-plans skill and architect agent: a contract-only first step must keep the current code working, so it adds a new field as optional and keeps an old one until a later step removes it. A contract that can't change compatibly gets one step that changes the contract and every side together. The architect now asks for contract tests only when the profile is `(external, teams)`, like the task-plans skill.
 
 ## Released
 

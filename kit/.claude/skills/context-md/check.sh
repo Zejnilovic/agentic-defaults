@@ -6,7 +6,7 @@
 #
 # Usage: bash check.sh [--base <ref>] [--strict | --hook]
 #   default       uncommitted changes (staged, unstaged, untracked) against HEAD
-#   --base <ref>  also include commits since <ref>, e.g. --base origin/main for a branch or pull request; exits 2 if git can't compare with it
+#   --base <ref>  also include commits since <ref>, e.g. --base origin/<default branch> for committed work or a pull request; exits 2 if git can't compare with it
 #   --strict      exit 1 when there is something to check (for CI or pre-commit)
 #   --hook        for an agent's end-of-turn hook (Claude Code "Stop", GitHub Copilot "agentStop"): prints
 #                 {"decision": "block", "reason": ...} on stdout, once per distinct finding, which both tools
