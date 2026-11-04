@@ -619,6 +619,13 @@ class CheckCopyCase(unittest.TestCase):
             self.assertIn(text, result.stdout)
 
 
+class CheckAgentsTest(CheckCopyCase):
+    def test_every_agent_must_ask_for_the_working_agreement(self):
+        agent = "kit/.claude/agents/developer.md"
+        write(self.root, agent, self.read(agent).replace("include-custom-instructions: true\n", ""))
+        self.assert_fails("developer.md: no 'include-custom-instructions: true'")
+
+
 class CheckBudgetTest(CheckCopyCase):
     def test_only_the_kit_part_of_the_agreement_counts(self):
         agreement, filler = "kit/AGENTS.md", " word" * 200 + "\n"

@@ -2,6 +2,7 @@
 name: flask-developer
 description: Implements well-defined tasks or plan steps in Python Flask backends (endpoints, services, background jobs, integrations) test-first with pytest. Use for Flask work; relational-database-developer handles schema and migrations.
 model: haiku
+include-custom-instructions: true
 skills:
   - implementation
   - flask

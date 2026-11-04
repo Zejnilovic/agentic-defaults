@@ -22,7 +22,7 @@ KIT = REPO / "kit"
 AGENTS_DIR = KIT / ".claude/agents"
 SKILLS_DIR = KIT / ".claude/skills"
 AGREEMENT_WORD_BUDGET = 700  # kit/AGENTS.md is loaded into every conversation
-AGENT_FIELDS = {"name", "description", "model", "skills"}
+AGENT_FIELDS = {"name", "description", "model", "include-custom-instructions", "skills"}
 MODELS = {"haiku", "sonnet", "opus", "inherit"}
 
 problems = []
@@ -84,6 +84,8 @@ for path in sorted(AGENTS_DIR.glob("*.md")):
         problems.append(f"{rel(path)}: unsupported fields {sorted(extra)} (allowed: {sorted(AGENT_FIELDS)})")
     if "model" in fields and fields["model"] not in MODELS:
         problems.append(f"{rel(path)}: model '{fields['model']}' is not one of {sorted(MODELS)}")
+    if fields.get("include-custom-instructions") != "true":
+        problems.append(f"{rel(path)}: no 'include-custom-instructions: true', so it would miss AGENTS.md as a Copilot CLI subagent")
     preload = fields.get("skills") if isinstance(fields.get("skills"), list) else []
     preloads[path.stem] = preload
     for skill in set(preload) | skill_mentions(text):

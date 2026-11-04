@@ -1,4 +1,4 @@
-<!-- agentic-defaults 0.5.3. From agentic-defaults down to "This project": kit updates replace it, so don't edit it. The rest belongs to the project. -->
+<!-- agentic-defaults 0.5.4. From agentic-defaults down to "This project": kit updates replace it, so don't edit it. The rest belongs to the project. -->
 
 # Working agreement
 
@@ -68,3 +68,7 @@ Files and parts marked "From agentic-defaults" are replaced when the kit updates
 - `make test`: ... (one file or test: `make test T=<path>`)
 - `make lint` and `make format`: ...
 - `make check`: everything that must pass before work is done: ...
+
+### Company knowledge
+
+<!-- Optional. One line for each place outside this file that holds rules or facts agents must follow, such as who may use which cloud role. For example: "Read `docs/company/aws.md` before any AWS or Terraform work. If you can't open it, say so before going on." -->

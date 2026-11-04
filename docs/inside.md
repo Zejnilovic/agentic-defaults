@@ -49,14 +49,14 @@ The kit has four kinds of files. Instructions, skills and agents are generic: no
 
 ## Where the files go
 
-agd installs into the project paths below, which give both tools everything.
+agd installs into the project paths below, which give each tool everything.
 
-| Kind | Claude Code | GitHub Copilot (VS Code) |
-|---|---|---|
-| Instructions | `AGENTS.md` and `CLAUDE.md` at the project root | `AGENTS.md` at the project root, or merged into `.github/copilot-instructions.md` |
-| Skills | `.claude/skills/<name>/` | `.claude/skills/<name>/` or `.github/skills/<name>/` |
-| Agents | `.claude/agents/<name>.md` | `.claude/agents/<name>.md`, or `.github/agents/<name>.agent.md` |
-| Local notes | `.local_context/` at the project root | Same |
-| End-of-turn context check | A Stop hook you add to `.claude/settings.json` | `.github/hooks/context-check.json`, shipped with the kit |
+| Kind | Claude Code | GitHub Copilot (VS Code) | GitHub Copilot CLI |
+|---|---|---|---|
+| Instructions | `AGENTS.md` and `CLAUDE.md` at the project root | `AGENTS.md` at the project root, or merged into `.github/copilot-instructions.md` | `AGENTS.md` at the project root |
+| Skills | `.claude/skills/<name>/` | `.claude/skills/<name>/` or `.github/skills/<name>/` | `.claude/skills/<name>/` or `.github/skills/<name>/` |
+| Agents | `.claude/agents/<name>.md` | `.claude/agents/<name>.md`, or `.github/agents/<name>.agent.md` | `.claude/agents/<name>.md`, or `.github/agents/<name>.agent.md`, which wins over it |
+| Local notes | `.local_context/` at the project root | Same | Same |
+| End-of-turn context check | A Stop hook you add to `.claude/settings.json` | `.github/hooks/context-check.json`, shipped with the kit | `.github/hooks/context-check.json`, shipped with the kit |
 
 For files in your home folder, see [Personal setup](paths.md#personal-setup).

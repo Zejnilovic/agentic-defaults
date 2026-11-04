@@ -101,13 +101,15 @@ You'll update by hand, using the [releases](https://github.com/Zejnilovic/agenti
 
 ## Personal setup
 
-The installer works per project, so copy personal files by hand:
+agd installs this kit per project. For your home folder, `agd --home init` installs [agentic-home](https://github.com/Zejnilovic/agentic-home), and you can [take this kit's skills there too](https://zejnilovic.github.io/agd/guides/home/#take-only-a-kits-skills). Either way the files land in `~/.claude/`, which Copilot CLI doesn't read, so [point it there once](https://zejnilovic.github.io/agd/guides/home/#copilot-cli).
 
-| Kind | Claude Code | GitHub Copilot (VS Code) |
-|---|---|---|
-| Instructions | Import from `~/.claude/CLAUDE.md`, for example `@path/to/AGENTS.md` | `~/.copilot/copilot-instructions.md` |
-| Skills | `~/.claude/skills/<name>/` | `~/.copilot/skills/<name>/` |
-| Agents | `~/.claude/agents/<name>.md` | `~/.claude/agents/<name>.md` or `~/.copilot/agents/<name>.agent.md` |
+To copy personal files by hand, these are the places:
+
+| Kind | Claude Code | GitHub Copilot (VS Code) | GitHub Copilot CLI |
+|---|---|---|---|
+| Instructions | Import from `~/.claude/CLAUDE.md`, for example `@path/to/AGENTS.md` | `~/.copilot/copilot-instructions.md` | `~/.copilot/copilot-instructions.md` |
+| Skills | `~/.claude/skills/<name>/` | `~/.copilot/skills/<name>/` | `~/.copilot/skills/<name>/` or `~/.agents/skills/<name>/`. A project's skill of the same name wins |
+| Agents | `~/.claude/agents/<name>.md` | `~/.claude/agents/<name>.md` or `~/.copilot/agents/<name>.agent.md` | `~/.copilot/agents/<name>.md` or `~/.copilot/agents/<name>.agent.md` |
 
 ## Team setup
 

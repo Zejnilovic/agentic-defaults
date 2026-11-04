@@ -42,7 +42,7 @@ Each framework skill pairs with a developer agent of the same name.
 | [`spring`](https://github.com/Zejnilovic/agentic-defaults/blob/master/kit/.claude/skills/spring/SKILL.md) | Java and Spring Boot: DTOs, Bean Validation, Spring Security, `@Transactional` pitfalls, JPA fetching, MockMvc and Testcontainers. |
 | [`react`](https://github.com/Zejnilovic/agentic-defaults/blob/master/kit/.claude/skills/react/SKILL.md) | React: reuse what exists, all four data states, state and effects, forms, accessibility, security, React Testing Library. |
 | [`relational-database`](https://github.com/Zejnilovic/agentic-defaults/blob/master/kit/.claude/skills/relational-database/SKILL.md) | PostgreSQL, MySQL, SQLite: expand-then-contract migrations, Alembic, Flyway and Liquibase traps, engine-specific locking, strict stop rules. |
-| [`terraform`](https://github.com/Zejnilovic/agentic-defaults/blob/master/kit/.claude/skills/terraform/SKILL.md) | Terraform, OpenTofu and Terragrunt: plan but never apply, reading every plan, `moved` blocks, `for_each` over `count`, version and lock-file pinning, state and secrets, S3 locking, `terraform test` with mock providers, strict stop rules. |
+| [`terraform`](https://github.com/Zejnilovic/agentic-defaults/blob/master/kit/.claude/skills/terraform/SKILL.md) | Terraform, OpenTofu and Terragrunt: plan but never apply, reading every plan, `moved` blocks, `for_each` over `count`, version and lock-file pinning, state and secrets, S3 locking, `terraform test` with mock providers, Terragrunt HCL checks, strict stop rules. |
 
 ## Platforms
 

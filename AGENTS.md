@@ -21,7 +21,7 @@ This repo publishes reusable instructions, skills and agents. Everything under `
 
 ## Compatibility: Claude Code and GitHub Copilot
 
-- **Agents**: `name` and `description` are required and read by both tools. `model` (a Claude alias such as `haiku` or `sonnet`) and `skills` (skills to preload) are read by Claude Code only; VS Code doesn't read them from `.claude/agents` files. Don't set `tools`: tool names differ between products, and an agent with a wrong tool list silently loses abilities. Write restrictions such as "don't modify files" in the body.
+- **Agents**: `name` and `description` are required and read by every tool. `model` (a Claude alias such as `haiku` or `sonnet`) and `skills` (skills to preload) are read by Claude Code; VS Code doesn't read them from `.claude/agents` files. Copilot CLI reads both, but can't resolve the aliases, so a subagent fails until the project changes its `model:` line (README, "Keeping model costs down"). Every agent sets `include-custom-instructions: true`, or it misses `AGENTS.md` as a Copilot CLI subagent; Claude Code ignores the line, and `check.py` requires it. Don't set `tools`: tool names differ between products, and an agent with a wrong tool list silently loses abilities. Write restrictions such as "don't modify files" in the body.
 - **Skills**: follow the Agent Skills format. One folder per skill containing `SKILL.md`; `name` is lowercase with hyphens and matches the folder; `description` says what the skill does and when to use it.
 - **Bodies**: describe actions ("search the code", "run the tests") rather than naming a product's tools.
 - **Instructions**: `kit/AGENTS.md` is the single source. `kit/CLAUDE.md` only imports it.

@@ -2,6 +2,7 @@
 name: relational-database-developer
 description: Implements well-defined database tasks or plan steps on relational databases (schema changes, migrations with Alembic, Flyway or Liquibase, indexes, queries, data fixes) safely and test-first. Use for schema and migration work; framework developers handle the code that uses it.
 model: haiku
+include-custom-instructions: true
 skills:
   - implementation
   - relational-database

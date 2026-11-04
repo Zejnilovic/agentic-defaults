@@ -2,7 +2,7 @@
 
 Sensible defaults for agentic coding: test-first, reasonable coverage, and context that stays current.
 
-Generic instructions, skills and agents for AI coding assistants, built around practical delivery and modest model budgets. Everything in [`kit/`](kit/) works in both **Claude Code** and **GitHub Copilot** (VS Code). Other tools that read `AGENTS.md`, such as Cursor, get the working agreement; the skills and agents have only been tested in Claude Code and Copilot. Install it in a project with [agd](https://github.com/Zejnilovic/agd), or copy what you need.
+Generic instructions, skills and agents for AI coding assistants, built around practical delivery and modest model budgets. Everything in [`kit/`](kit/) works in both **Claude Code** and **GitHub Copilot** (VS Code). **GitHub Copilot CLI** reads it too, once you [change the agents' `model:` lines](#keeping-model-costs-down). Other tools that read `AGENTS.md`, such as Cursor, get the working agreement; the skills and agents have only been tested in Claude Code and Copilot. Install it in a project with [agd](https://github.com/Zejnilovic/agd), or copy what you need.
 
 **Why it works this way:** [Working with coding agents](https://zejnilovic.eu/guides/working-with-coding-agents) explains the method behind the kit ([same text in this repo](docs/methodology.md)). It covers the principles, rules of thumb, anti-patterns and nine hands-on exercises, and is written to stay true as tools and models change.
 
@@ -68,7 +68,7 @@ Instructions, skills and agents are generic: nothing in them is about one projec
 | [`spring`](kit/.claude/skills/spring/SKILL.md) | Java and Spring Boot: DTOs, Bean Validation, Spring Security, `@Transactional` pitfalls, JPA fetching, MockMvc and Testcontainers. |
 | [`react`](kit/.claude/skills/react/SKILL.md) | React: reuse what exists, all four data states, state and effects, forms, accessibility, security, React Testing Library. |
 | [`relational-database`](kit/.claude/skills/relational-database/SKILL.md) | PostgreSQL, MySQL, SQLite: expand-then-contract migrations, Alembic, Flyway and Liquibase traps, engine-specific locking, strict stop rules. |
-| [`terraform`](kit/.claude/skills/terraform/SKILL.md) | Terraform, OpenTofu and Terragrunt: plan but never apply, reading every plan, `moved` blocks, `for_each` over `count`, version and lock-file pinning, state and secrets, S3 locking, `terraform test` with mock providers, strict stop rules. |
+| [`terraform`](kit/.claude/skills/terraform/SKILL.md) | Terraform, OpenTofu and Terragrunt: plan but never apply, reading every plan, `moved` blocks, `for_each` over `count`, version and lock-file pinning, state and secrets, S3 locking, `terraform test` with mock providers, Terragrunt HCL checks, strict stop rules. |
 | [`aws`](kit/.claude/skills/aws/SKILL.md) | AWS: short-lived credentials and checking the account, which CLI commands an agent runs and which it hands to you, least-privilege IAM, public exposure, encryption, cost traps and tags. |
 | [`heroku`](kit/.claude/skills/heroku/SKILL.md) | Heroku: which CLI commands an agent runs and which it hands to you, dynos and `$PORT`, config vars, release-phase migrations, Postgres connections, pipelines, review apps, Scheduler, and moving off Heroku. |
 
@@ -137,37 +137,44 @@ Small changes need none of this: the working agreement and skills cover a normal
 
 - **Claude Code** reads each agent's `model` field: `sonnet` for strong roles and `haiku` for everyday ones. Change it to suit you; `inherit` uses the conversation's model.
 - **Copilot (VS Code)** doesn't read `model` from `.claude/agents` files, so an agent uses whichever model is selected in the chat. Use your everyday model by default and switch to a strong one for the architect and reviewers. To pin a model, copy the agent to `.github/agents/<name>.agent.md` and set `model` to a name from Copilot's model picker.
+- **Copilot CLI** reads `model` from `.claude/agents` files, but doesn't recognize `haiku` or `sonnet`. Called as a subagent, such an agent fails with `Model 'haiku' is not available`, and the main conversation then does the work itself or retries on another model. Started with `--agent`, it warns and uses the session's model. So change the lines to `inherit`, which both tools read, though Claude Code then uses the conversation's model too:
+
+  ```bash
+  perl -pi -e 's/^model: .*/model: inherit/' .claude/agents/*.md
+  ```
+
+  Kit updates keep these lines. If only Copilot uses the project, you can pick a tier per agent with an ID from `/model`, such as `claude-haiku-4.5`. To leave the project's files alone, set it for yourself with `/subagents`, or `subagents.agents.<name>.model` in `~/.copilot/settings.json`. The same setting in the repository's `.github/copilot/settings.json` has no effect.
 
 ## Claude Code and GitHub Copilot
 
-The kit is plain Markdown, shell scripts and JSON in the formats both tools read. Where they differ:
+The kit is plain Markdown, shell scripts and JSON in the formats these tools read. Where they differ:
 
-| | Claude Code | GitHub Copilot (VS Code) |
-|---|---|---|
-| Working agreement | `CLAUDE.md` imports `AGENTS.md` | Reads `AGENTS.md` directly |
-| Skills | Loaded when relevant; an agent's `skills:` list preloads them | Reads `.claude/skills/` and loads them when relevant; ignores `skills:`, so each agent also names its skills and keeps a short fallback |
-| Agents | Subagents, chosen by their description or by name | Modes in the agent dropdown, or subagents once **Run Subagent** is enabled under Configure Tools |
-| Model per agent | The agent's `model:` field | The model selected in the chat, or `model` in a `.github/agents/<name>.agent.md` copy |
-| Scripts, `make`, `gh` | Run in the terminal | The same; agent mode runs terminal commands |
-| End-of-turn context check | A `Stop` hook you add to `.claude/settings.json` | `.github/hooks/context-check.json`, shipped with the kit |
-| Web research | Built-in web search and page fetching | The fetch tool for pages; without web access, the research agents fall back to local sources and say so |
+| | Claude Code | GitHub Copilot (VS Code) | GitHub Copilot CLI |
+|---|---|---|---|
+| Working agreement | `CLAUDE.md` imports `AGENTS.md` | Reads `AGENTS.md` directly | Reads `AGENTS.md` and `CLAUDE.md`, which imports it, so the text loads twice. If only Copilot uses the project, list `CLAUDE.md` in `.agd-ignore`. A subagent reads it because the kit's agents set `include-custom-instructions: true` |
+| Skills | Loaded when relevant; an agent's `skills:` list preloads them | Reads `.claude/skills/` and loads them when relevant; ignores `skills:`, so each agent also names its skills and keeps a short fallback | Reads `.claude/skills/` and loads them when relevant; an agent's `skills:` list preloads them |
+| Agents | Subagents, chosen by their description or by name | Modes in the agent dropdown, or subagents once **Run Subagent** is enabled under Configure Tools | Reads `.claude/agents/`. Subagents, or `--agent <name>` for a whole session |
+| Model per agent | The agent's `model:` field | The model selected in the chat, or `model` in a `.github/agents/<name>.agent.md` copy | The agent's `model:` field, but [not `haiku` or `sonnet`](#keeping-model-costs-down) |
+| Scripts, `make`, `gh` | Run in the terminal | The same; agent mode runs terminal commands | The same; it asks first unless you allow the tool |
+| End-of-turn context check | A `Stop` hook you add to `.claude/settings.json` | `.github/hooks/context-check.json`, shipped with the kit | The same file, [in a folder you trust](#keeping-contextmd-current) |
+| Web research | Built-in web search and page fetching | The fetch tool for pages; without web access, the research agents fall back to local sources and say so | Not tested |
 
-Copilot support follows the VS Code and GitHub documentation. Everything except the Copilot hook has been used in a project; check the hook in your first Copilot session.
+Copilot in VS Code follows the VS Code and GitHub documentation. Everything except the Copilot hook has been used in a project; check the hook in your first VS Code session. The CLI column comes from real sessions with Copilot CLI 1.0.105 on macOS, in November 2026.
 
 ## Where the files go
 
-| Kind | Claude Code | GitHub Copilot (VS Code) |
-|---|---|---|
-| Instructions, per project | `AGENTS.md` and `CLAUDE.md` at the project root | `AGENTS.md` at the project root, or merge its content into `.github/copilot-instructions.md` |
-| Instructions, personal | Import from `~/.claude/CLAUDE.md`, e.g. `@path/to/AGENTS.md` | `~/.copilot/copilot-instructions.md` |
-| Skills, per project | `.claude/skills/<name>/` | `.claude/skills/<name>/` or `.github/skills/<name>/` |
-| Skills, personal | `~/.claude/skills/<name>/` | `~/.copilot/skills/<name>/` |
-| Agents, per project | `.claude/agents/<name>.md` | `.claude/agents/<name>.md`, or `.github/agents/<name>.agent.md` |
-| Agents, personal | `~/.claude/agents/<name>.md` | `~/.claude/agents/<name>.md` or `~/.copilot/agents/<name>.agent.md` |
-| Local notes | `.local_context/` at the project root | Same |
-| End-of-turn context check | A Stop hook you add to `.claude/settings.json` ([snippet](#keeping-contextmd-current)) | `.github/hooks/context-check.json`, shipped with the kit |
+| Kind | Claude Code | GitHub Copilot (VS Code) | GitHub Copilot CLI |
+|---|---|---|---|
+| Instructions, per project | `AGENTS.md` and `CLAUDE.md` at the project root | `AGENTS.md` at the project root, or merge its content into `.github/copilot-instructions.md` | `AGENTS.md` at the project root |
+| Instructions, personal | Import from `~/.claude/CLAUDE.md`, e.g. `@path/to/AGENTS.md` | `~/.copilot/copilot-instructions.md` | `~/.copilot/copilot-instructions.md` |
+| Skills, per project | `.claude/skills/<name>/` | `.claude/skills/<name>/` or `.github/skills/<name>/` | `.claude/skills/<name>/` or `.github/skills/<name>/` |
+| Skills, personal | `~/.claude/skills/<name>/` | `~/.copilot/skills/<name>/` | `~/.copilot/skills/<name>/` or `~/.agents/skills/<name>/`. A project's skill of the same name wins |
+| Agents, per project | `.claude/agents/<name>.md` | `.claude/agents/<name>.md`, or `.github/agents/<name>.agent.md` | `.claude/agents/<name>.md`, or `.github/agents/<name>.agent.md`, which wins over it |
+| Agents, personal | `~/.claude/agents/<name>.md` | `~/.claude/agents/<name>.md` or `~/.copilot/agents/<name>.agent.md` | `~/.copilot/agents/<name>.md` or `~/.copilot/agents/<name>.agent.md` |
+| Local notes | `.local_context/` at the project root | Same | Same |
+| End-of-turn context check | A Stop hook you add to `.claude/settings.json` ([snippet](#keeping-contextmd-current)) | `.github/hooks/context-check.json`, shipped with the kit | `.github/hooks/context-check.json`, shipped with the kit |
 
-agd installs into the per-project paths, which give both tools everything. It doesn't install into your home folder yet: copy personal files by hand. When copying, copy each skill as a whole folder, since it may contain a template or script, and copy the skills an agent lists along with it.
+agd installs this kit into the per-project paths, which give each tool everything. For your home folder, `agd --home init` installs [agentic-home](https://github.com/Zejnilovic/agentic-home), and you can [take this kit's skills there too](https://zejnilovic.github.io/agd/guides/home/#take-only-a-kits-skills). Either way the files land in `~/.claude/`, which Copilot CLI doesn't read, so [point it there once](https://zejnilovic.github.io/agd/guides/home/#copilot-cli). When copying by hand, copy each skill as a whole folder, since it may contain a template or script, and copy the skills an agent lists along with it.
 
 ### Packs
 
@@ -251,6 +258,7 @@ Kit files are replaced when the kit updates. Each one says so at the top with a 
 | Extra instructions for one agent or skill | A `## This project` section at the end of that file |
 | A fact or convention about part of the code | That area's `CONTEXT.md` |
 | A project-only role or practice | A new agent or skill file with its own name; kit updates never touch it |
+| Rules or facts your company keeps elsewhere, such as who may use which cloud role | One line under "Company knowledge" in "This project" in `AGENTS.md` ([how](docs/your-files.md#company-knowledge)) |
 | Different behavior from a kit file | A copy under a new name, with the original listed in `.agd-ignore` |
 | A change every project would benefit from | A suggestion for this repository |
 
@@ -292,7 +300,7 @@ bash .claude/skills/context-md/check.sh
 Agents run it themselves. You can also run it automatically:
 
 - **At the end of each agent turn**, in both tools. When code changed and a `CONTEXT.md` didn't, the agent gets one reminder and either updates the file or says why none is needed. The same finding is never raised twice. The script's `--hook` mode prints `{"decision": "block", "reason": ...}`, which Claude Code's `Stop` hook and Copilot's `agentStop` hook both read as "keep working with this instruction".
-  - **GitHub Copilot** (VS Code, CLI and cloud agent): the kit ships [`.github/hooks/context-check.json`](kit/.github/hooks/context-check.json), so it is on as soon as the kit is installed. Copilot hooks are in preview in VS Code, an organization can restrict them, and the cloud agent only reads hooks from the default branch. The file follows GitHub's documentation but hasn't been tested in a real Copilot session yet. To turn it off, run `agd remove copilot-hook`.
+  - **GitHub Copilot** (VS Code, CLI and cloud agent): the kit ships [`.github/hooks/context-check.json`](kit/.github/hooks/context-check.json), so it is on as soon as the kit is installed. Copilot hooks are in preview in VS Code, an organization can restrict them, and the cloud agent only reads hooks from the default branch. The file works in Copilot CLI (1.0.105 on macOS), in a folder you trust: a session asks you when it starts, and `copilot -p` skips the hook without saying so unless the folder is already trusted or you pass `--trust-folder`. It follows GitHub's documentation but hasn't been tested in VS Code, in the cloud agent or on Windows, where the CLI may not run it, since the file sets only the `bash` command. To turn it off, run `agd remove copilot-hook`.
   - **Claude Code**: add a Stop hook to `.claude/settings.json` (shared with the team) or `.claude/settings.local.json` (just you), merged with what's already there. The kit doesn't ship this file, because updating it would overwrite a project's own settings.
 
   ```json
@@ -309,7 +317,7 @@ Agents run it themselves. You can also run it automatically:
   }
   ```
 
-  Copilot in VS Code also reads `.claude/settings.json`. If both hooks are set up, the second call finds the same finding and stays silent.
+  Copilot in VS Code and Copilot CLI also read `.claude/settings.json`. If both hooks are set up, the second call finds the same finding and stays silent.
 
 - **Before each commit**, as a reminder that doesn't block. Save this as `.git/hooks/pre-commit` and make it executable:
 
@@ -339,7 +347,8 @@ npm install -g @mermaid-js/mermaid-cli
 ## Customizing
 
 - **Restrictions are instructions, not enforcement.** "Edits tests only" is written in the agent's text. To enforce it, add a `tools` list to the agent, for example `tools: Read, Grep, Glob, Bash` for a read-only reviewer. Claude Code uses these names directly, and VS Code maps them for files in `.claude/agents`. Check that the agent can still do its job afterwards. Kit updates keep the line, as they keep `model:`.
-- **`skills` in an agent's frontmatter** preloads those skills in Claude Code. Copilot ignores the field and loads skills when they're relevant.
+- **`skills` in an agent's frontmatter** preloads those skills in Claude Code and Copilot CLI. Copilot in VS Code ignores the field and loads skills when they're relevant.
+- **`include-custom-instructions: true` in an agent's frontmatter** gives that agent `AGENTS.md` when it runs as a Copilot CLI subagent. Without it, the subagent has only its own file and the skills it lists. Claude Code's subagents read `AGENTS.md` either way, and it ignores the line. Keep the line in agents you add.
 - **Another framework** (FastAPI, Django, Angular, Vue and so on) is a pair: a `<framework>` skill and a `<framework>-developer` agent. Copy the closest existing pair, keep the skill's sections (follow the project first, structure, the framework's own concerns, tests, stop and report before), and keep `implementation` in the agent's `skills` list so it follows the shared rules. Project-specific conventions go in the area's `CONTEXT.md`, not in the skill.
 
 ## Feedback

@@ -2,6 +2,7 @@
 name: architect
 description: Designs the approach for a change that spans modules, adds a component or dependency, or needs a design decision, and writes it into the task's plan file as steps, diagrams and decisions. Not for small, local changes.
 model: sonnet
+include-custom-instructions: true
 skills:
   - task-plans
 ---

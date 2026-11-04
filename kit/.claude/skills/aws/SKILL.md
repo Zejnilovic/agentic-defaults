@@ -20,6 +20,7 @@ Follow the project first. Read the infrastructure's `CONTEXT.md` for its account
 
 ## The CLI
 
+- **Query first**: check real state with read-only commands as often as you need, instead of guessing IDs or ARNs or asking the user something a query can answer. If a read gets `AccessDenied`, report it with the role you used.
 - **Run freely** (read-only): `describe-*`, `list-*`, most `get-*`, `aws s3 ls`, `aws logs tail` with a time limit. Add `--no-cli-pager`, the region (`--region` or the profile's), and `--query` to keep the output short.
 - **Never print secrets**: no `secretsmanager get-secret-value`, no `ssm get-parameter --with-decryption`, nothing that returns keys or passwords. Refer to them by name or ARN.
 - **Hand to the user**, as the exact command with `--profile` and `--region` and one line on what it does: every command that creates, changes, deletes, starts, stops or invokes something, including `aws s3 cp`, `sync` and `rm`. If the project manages the resource with Terraform, the change belongs in Terraform, not the CLI.

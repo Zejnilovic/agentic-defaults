@@ -28,7 +28,8 @@ When code changed and a `CONTEXT.md` didn't, the agent gets one reminder and eit
 
     - Copilot hooks are in preview in VS Code, and an organization can restrict them.
     - The cloud agent only reads hooks from the default branch.
-    - The file follows GitHub's documentation but hasn't been tested in a real Copilot session yet.
+    - Copilot CLI runs it only in a folder you trust. A session asks you when it starts, and `copilot -p` skips the hook without saying so unless the folder is already trusted or you pass `--trust-folder`.
+    - The file has been tested in Copilot CLI (1.0.105 on macOS). It follows GitHub's documentation but hasn't been tested in VS Code, in the cloud agent or on Windows, where the CLI may not run it, since the file sets only the `bash` command.
 
     To turn it off, remove the `copilot-hook` pack.
 
@@ -50,7 +51,7 @@ When code changed and a `CONTEXT.md` didn't, the agent gets one reminder and eit
     }
     ```
 
-    Copilot in VS Code also reads `.claude/settings.json`. If both hooks are set up, the second call finds the same finding and stays silent.
+    Copilot in VS Code and Copilot CLI also read `.claude/settings.json`. If both hooks are set up, the second call finds the same finding and stays silent.
 
 ### Before each commit
 

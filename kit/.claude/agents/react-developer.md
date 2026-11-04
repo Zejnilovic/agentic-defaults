@@ -2,6 +2,7 @@
 name: react-developer
 description: Implements well-defined tasks or plan steps in React frontends (pages, components, hooks, forms, API calls) test-first with React Testing Library. Use for React work; backend developers handle the API.
 model: haiku
+include-custom-instructions: true
 skills:
   - implementation
   - react

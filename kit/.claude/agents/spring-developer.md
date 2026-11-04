@@ -2,6 +2,7 @@
 name: spring-developer
 description: Implements well-defined tasks or plan steps in Java Spring Boot backends (controllers, services, repositories, configuration) test-first with JUnit. Use for Spring work; relational-database-developer handles schema and migrations.
 model: haiku
+include-custom-instructions: true
 skills:
   - implementation
   - spring

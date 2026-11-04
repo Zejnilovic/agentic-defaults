@@ -16,7 +16,7 @@ Follow the project first. Read the infrastructure's `CONTEXT.md`, one module or 
 - Run `terraform plan`, `terragrunt plan` or `terragrunt run --all plan` as often as you need.
 - Never run `apply`, `destroy`, `import` on the command line, `state mv`, `state rm`, `state push`, `force-unlock`, `taint`, `init -migrate-state`, or `terragrunt backend bootstrap` (or `--backend-bootstrap`). They change live resources or state.
 - Never pass `-auto-approve`, `-lock=false` or Terragrunt's `--non-interactive`, which answers yes to every prompt. A plan holds the state lock while it runs; if a lock is stuck, report it.
-- When the change is ready, hand the user the apply command, the folder to run it from, and the plan's summary line (`N to add, N to change, N to destroy`). `terragrunt run --all apply` and `destroy` skip the confirmation prompt, and `run --all destroy` also destroys the units' dependencies: say so when you hand one over.
+- When the change is ready, hand the user the apply command, the folder to run it from, the role or profile to run it with, and the plan's summary line (`N to add, N to change, N to destroy`). A plan doesn't carry out the changes, so it can't prove the apply is allowed: say so. `terragrunt run --all apply` and `destroy` skip the confirmation prompt, and `run --all destroy` also destroys the units' dependencies: say so when you hand one over.
 
 ## Read every plan
 
@@ -57,6 +57,7 @@ Follow the project first. Read the infrastructure's `CONTEXT.md`, one module or 
 ## Tests
 
 - Every change: run what the project has, in this order: `terraform fmt -check -recursive`, `terraform validate`, TFLint, a scanner such as Trivy or Checkov, and `terraform test`. Then a plan whose changes you can explain line by line.
+- Terragrunt projects: `terraform fmt` doesn't check `terragrunt.hcl` files, so also run `terragrunt hcl fmt --check` and `terragrunt hcl validate`.
 - If the project lacks TFLint, a scanner, pre-commit hooks or a committed lock file, suggest them once in your report. Don't add them yourself.
 - Modules with logic (conditionals, `for_each` over inputs, validations) get `terraform test` files (`tests/*.tftest.hcl`). Test what the module decides, not that an input reaches an argument.
 - Tests must not create real resources: a `run` block applies unless it sets `command = plan`. Use `command = plan` with `mock_provider` (Terraform 1.7 and later) so tests need no credentials. Check validation rules with `expect_failures`.

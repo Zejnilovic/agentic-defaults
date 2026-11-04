@@ -2,6 +2,7 @@
 name: tester
 description: Finds untested behavior that matters in a change or module, writes the missing tests, and reports the bugs they expose. Also turns a bug report into a failing test.
 model: haiku
+include-custom-instructions: true
 skills:
   - tdd
 ---
